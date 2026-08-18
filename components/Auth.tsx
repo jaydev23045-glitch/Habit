@@ -110,8 +110,22 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onDevBypass }) => {
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-center gap-2 text-slate-600">
-           <ShieldCheck size={16} /> <span className="text-[10px] font-bold uppercase tracking-widest">Local-First Vault Verification</span>
+        <div className="mt-6 space-y-3">
+          <div className="flex items-center justify-center gap-2 text-slate-600">
+             <ShieldCheck size={16} /> <span className="text-[10px] font-bold uppercase tracking-widest">Local-First Vault Verification</span>
+          </div>
+          
+          <details className="group max-w-sm mx-auto bg-bgDarker/30 border border-white/5 rounded-2xl p-3 select-none cursor-pointer hover:border-emerald-500/20 transition-all">
+             <summary className="text-[9px] font-black text-slate-500 group-hover:text-slate-400 uppercase tracking-widest flex items-center justify-between outline-none list-none">
+               <span>🔒 Secure Cloud Vault Architecture</span>
+               <span className="text-slate-600 transition-transform group-open:rotate-180">▼</span>
+             </summary>
+             <div className="mt-2 text-[8px] text-slate-500 leading-relaxed font-semibold space-y-1.5 pt-1.5 border-t border-white/5 text-left">
+                <p>• <strong>Row-Level Security (RLS)</strong>: The database restricts table data access strictly to authenticated account credentials.</p>
+                <p>• <strong>Secure SSL Tunnels</strong>: All connection protocols are fully encrypted using standard HTTPS/WSS channels.</p>
+                <p>• <strong>bcrypt Passwords</strong>: Credentials are fully hashed before persistence, preventing breach disclosures.</p>
+             </div>
+          </details>
         </div>
 
         {/* DEV BYPASS — remove before production */}

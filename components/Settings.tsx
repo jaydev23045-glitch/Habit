@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile, AppData, CloudConfig } from '../types';
-import { Save, User, LogOut, Download, Upload, Globe, Loader2, RefreshCw, Volume2, VolumeX, ShieldAlert } from 'lucide-react';
+import { Save, User, LogOut, Download, Upload, Globe, Loader2, RefreshCw, Volume2, VolumeX, ShieldAlert, Shield } from 'lucide-react';
 import { voiceService } from '../services/voiceService';
 import { audioService } from '../services/audioService';
 
@@ -175,6 +175,16 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
               {isPulling ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
               Pull Cloud Vault Data
             </button>
+
+            {/* Security Guard Info Panel */}
+            <div className="bg-bgDark/40 border border-white/5 rounded-2xl p-4 space-y-1.5 text-left">
+              <div className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-wider">
+                <Shield size={12} className="text-emerald-400" /> Database Security Guard
+              </div>
+              <div className="text-[9px] text-slate-500 leading-relaxed font-semibold">
+                This project utilizes <strong className="text-emerald-400">Row-Level Security (RLS)</strong>. Your vault rows are only read/write accessible via matching authenticated sessions. Public credentials do not expose user records, and communication is encrypted with HTTPS.
+              </div>
+            </div>
           </div>
         </div>
 
