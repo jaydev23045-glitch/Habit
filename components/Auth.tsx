@@ -88,9 +88,18 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
 
             {/* Error alerts */}
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-xs font-bold flex items-center gap-3 animate-fade-in">
-                <AlertCircle size={16} className="shrink-0" />
-                <span>{error}</span>
+              <div className="space-y-3 animate-fade-in">
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-xs font-bold flex items-center gap-3">
+                  <AlertCircle size={16} className="shrink-0" />
+                  <span>{error}</span>
+                </div>
+                {error.toLowerCase().includes('email not confirmed') && (
+                  <div className="bg-amber-500/5 border border-amber-500/20 text-amber-400/80 p-4 rounded-xl text-[10px] leading-relaxed font-semibold text-left space-y-1.5 border border-dashed">
+                    <div className="font-bold text-amber-400 uppercase tracking-widest text-[9px] mb-1">How to fix this:</div>
+                    <p>• Check your email inbox for a confirmation link sent by Supabase.</p>
+                    <p>• <strong>Or to bypass this requirement</strong>: Go to your <strong>Supabase Dashboard</strong> &gt; <strong>Authentication</strong> &gt; <strong>Providers</strong> &gt; <strong>Email</strong>, turn off the <strong>"Confirm email"</strong> switch, and click Save.</p>
+                  </div>
+                )}
               </div>
             )}
 
