@@ -110,14 +110,9 @@ export default function App() {
           setUserEmail(session.user.email);
           localStorage.setItem('flow-os-auth-email', session.user.email);
         } else {
-          // If we don't have a valid Supabase session, clear email unless dev bypass is active
-          const cachedEmail = localStorage.getItem('flow-os-auth-email');
-          const isDev = cachedEmail === 'developer@flow.os' || cachedEmail === 'dev@test.local';
-          if (!isDev) {
-            setIsAuthenticated(false);
-            setUserEmail('');
-            localStorage.removeItem('flow-os-auth-email');
-          }
+          setIsAuthenticated(false);
+          setUserEmail('');
+          localStorage.removeItem('flow-os-auth-email');
         }
       } catch (e) {
         console.error('[Flow OS] Failed to pull auth session:', e);
@@ -132,12 +127,8 @@ export default function App() {
         setUserEmail(session.user.email);
         localStorage.setItem('flow-os-auth-email', session.user.email);
       } else {
-        const cachedEmail = localStorage.getItem('flow-os-auth-email');
-        const isDev = cachedEmail === 'developer@flow.os' || cachedEmail === 'dev@test.local';
-        if (!isDev) {
-          setIsAuthenticated(false);
-          setUserEmail('');
-        }
+        setIsAuthenticated(false);
+        setUserEmail('');
       }
     });
 
@@ -664,163 +655,7 @@ export default function App() {
     audioService.playAction();
   };
 
-  // ── DEV BYPASS — skips Supabase auth for local testing ──────────────────
-  const handleDevBypass = () => {
-    // Generate 6 months of mock data
-    const tasks: Task[] = [];
-    const archivedTasks: Task[] = [];
-    const reflections: DayReflection[] = [];
-    const workSessions: WorkSession[] = [];
-    
-    // We will procedurally generate data day by day for the last 180 days
-    const todayDate = new Date();
-    const todayStr = todayDate.toISOString().split('T')[0];
-    
-    const habitHistory1: Record<string, boolean> = {};
-    const habitHistory2: Record<string, boolean> = {};
-    const habitHistory3: Record<string, boolean> = {};
-    const habitHistory4: Record<string, boolean> = {};
-
-    const taskTitles = [
-      { title: 'Refactor state selector hooks', tag: 'Codebase', duration: 45, intensity: 'medium' },
-      { title: 'Write integration test protocols', tag: 'Testing', duration: 60, intensity: 'high' },
-      { title: 'Review security policies in Supabase', tag: 'Security', duration: 30, intensity: 'low' },
-      { title: 'Calibrate canvas charts coordinates', tag: 'Design', duration: 40, intensity: 'medium' },
-      { title: 'Audit database index latency', tag: 'Database', duration: 55, intensity: 'high' },
-      { title: 'Polish settings responsive grids', tag: 'UI Polish', duration: 25, intensity: 'low' }
-    ];
-
-    const workSessionTitles = [
-      'JYJ WORK - Cloud Refactor',
-      'General Coding Sprint',
-      'Admin & Correspondence',
-      'Spaced Learning Review'
-    ];
-
-    for (let i = 180; i >= 0; i--) {
-      const currentDate = new Date();
-      currentDate.setDate(todayDate.getDate() - i);
-      const dateStr = currentDate.toISOString().split('T')[0];
-      
-      const isToday = (i === 0);
-      
-      // Habits Completion (Procedural streaks)
-      // Morning Workout (80% rate)
-      if (Math.random() < 0.8 && !isToday) habitHistory1[dateStr] = true;
-      // Read 30 Mins (70% rate)
-      if (Math.random() < 0.7 && !isToday) habitHistory2[dateStr] = true;
-      // Meditate (60% rate)
-      if (Math.random() < 0.6 && !isToday) habitHistory3[dateStr] = true;
-      // Deep Work Session (50% rate)
-      if (Math.random() < 0.5 && !isToday) habitHistory4[dateStr] = true;
-
-      // 75% chance of activity on any past day
-      if (Math.random() < 0.75 || isToday) {
-        // Generate 2-4 tasks for this day
-        const numTasks = Math.floor(Math.random() * 3) + 2;
-        for (let t = 0; t < numTasks; t++) {
-          const tTemplate = taskTitles[Math.floor(Math.random() * taskTitles.length)];
-          const completed = isToday ? (t === 0) : true; // Today has 1 completed, others incomplete
-          const completedAt = completed ? new Date(currentDate.getTime() + t * 3600000).toISOString() : undefined;
-          
-          const taskObj: Task = {
-            id: uuidv4(),
-            title: tTemplate.title,
-            time: `${10 + t}:00`,
-            date: dateStr,
-            completed,
-            type: 'task',
-            priority: t === 0 ? 'high' : t === 1 ? 'medium' : 'low',
-            tag: tTemplate.tag,
-            actualDuration: completed ? tTemplate.duration : undefined,
-            completedAt,
-            intensity: tTemplate.intensity as any
-          };
-          
-          if (isToday) {
-            tasks.push(taskObj);
-          } else {
-            archivedTasks.push(taskObj);
-          }
-        }
-
-        // Generate 1-2 work stopwatch sessions
-        if (!isToday) {
-          const numSessions = Math.random() < 0.5 ? 1 : 2;
-          for (let s = 0; s < numSessions; s++) {
-            const durationSecs = Math.floor(Math.random() * 3600) + 1200; // 20 mins to 1.3 hours
-            const startMs = currentDate.getTime() + (s * 4 * 3600000); // spread out
-            
-            workSessions.push({
-              id: uuidv4(),
-              details: workSessionTitles[Math.floor(Math.random() * workSessionTitles.length)],
-              durationSeconds: durationSecs,
-              startedAt: new Date(startMs).toISOString(),
-              endedAt: new Date(startMs + durationSecs * 1000).toISOString()
-            });
-          }
-        }
-
-        // Generate Day Reflection reviews
-        if (!isToday) {
-          reflections.push({
-            date: dateStr,
-            wins: 'Successfully completed primary sprint goals.',
-            blockers: Math.random() < 0.3 ? 'Minor compilation delays.' : '',
-            mood: Math.random() < 0.2 ? 'Neutral' : 'Good',
-            energy: Math.random() < 0.3 ? 'Medium' : 'High',
-            quality: Math.floor(Math.random() * 3) + 7, // 7 to 10 rating
-            summary: 'A highly productive session verifying data-flow integrations.'
-          });
-        }
-      }
-    }
-
-    // Set today completions for habits
-    habitHistory1[todayStr] = true;
-    habitHistory3[todayStr] = true;
-
-    const testData: AppData = {
-      tasks,
-      habits: [
-        { id: uuidv4(), title: 'Morning Workout', streak: 18, completed: true, type: 'habit', history: habitHistory1, velocity: 88, attribute: 'STR', baseXp: 20 },
-        { id: uuidv4(), title: 'Read 30 Minutes', streak: 0, completed: false, type: 'habit', history: habitHistory2, velocity: 72, attribute: 'INT', baseXp: 15 },
-        { id: uuidv4(), title: 'Meditate', streak: 4, completed: true, type: 'habit', history: habitHistory3, velocity: 58, attribute: 'REC', baseXp: 10 },
-        { id: uuidv4(), title: 'Deep Work Session', streak: 0, completed: false, type: 'habit', history: habitHistory4, velocity: 52, attribute: 'FOC', baseXp: 25 },
-      ],
-      topics: [
-        { id: uuidv4(), title: 'React Advanced Patterns', description: 'Hooks, context, and performance', category: 'Programming', type: 'learning', status: 'active', difficulty: 'hard', priority: 'high', currentStep: 3, nextReviewDate: todayStr, lastReviewDate: null, history: ['learn on yesterday'], totalMinutes: 640, sessions: [] },
-        { id: uuidv4(), title: 'Supabase Internals', description: 'Row-level security policies and real-time triggers', category: 'Database', type: 'learning', status: 'active', difficulty: 'medium', priority: 'medium', currentStep: 2, nextReviewDate: todayStr, lastReviewDate: null, history: [], totalMinutes: 320, sessions: [] },
-      ],
-      potentials: [
-        { id: uuidv4(), title: 'Build a SaaS product', targetDate: '2026-12-31', category: 'idea', status: 'ready', createdAt: new Date().toISOString() },
-      ],
-      user: {
-        name: 'Senior Developer',
-        bio: '6 Months Telemetry Simulation',
-        email: 'developer@flow.os',
-        xp: 18450, // High level XP
-        stats: { STR: 540, INT: 780, WIL: 620, FOC: 910, REC: 490 }, // Higher RPG stats reflecting 6 months
-        freezeInventory: 5,
-        voiceEnabled: false,
-        lastLogin: new Date().toISOString(),
-        emailSettings: { enabled: false, frequency: 'monthly' },
-        cloudConfig: { provider: 'supabase', autoSync: false },
-      },
-      archivedTasks,
-      historicalReports: [],
-      aiHistory: [],
-      reflections,
-      workSessions
-    };
-
-    setData(testData);
-    setUserEmail('dev@test.local');
-    setIsAuthenticated(true);
-    audioService.playSuccess();
-  };
-
-  if (!isAuthenticated) return <Auth onLogin={handleAuth} onDevBypass={handleDevBypass} />;
+  if (!isAuthenticated) return <Auth onLogin={handleAuth} />;
 
   if (!isBooted) return <SystemBoot data={data} onBootComplete={() => setIsBooted(true)} />;
 

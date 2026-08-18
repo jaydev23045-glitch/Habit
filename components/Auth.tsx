@@ -4,10 +4,9 @@ import { Mail, Lock, User, ShieldCheck, ArrowRight, Loader2, Sparkles, HelpCircl
 
 interface AuthProps {
   onLogin: (email: string, pass: string, isSignup: boolean) => Promise<void>;
-  onDevBypass?: () => void;
 }
 
-export const Auth: React.FC<AuthProps> = ({ onLogin, onDevBypass }) => {
+export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -127,21 +126,6 @@ export const Auth: React.FC<AuthProps> = ({ onLogin, onDevBypass }) => {
              </div>
           </details>
         </div>
-
-        {/* DEV BYPASS — remove before production */}
-        {onDevBypass && (
-          <div className="mt-6 text-center">
-            <button
-              onClick={onDevBypass}
-              className="group relative inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-dashed border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-amber-400/60 hover:text-amber-400 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
-            >
-              <span className="text-amber-500/50 group-hover:text-amber-400 transition-colors">⚡</span>
-              Dev Bypass — Skip Auth
-              <span className="absolute -top-2 -right-2 bg-amber-500 text-black text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">DEV</span>
-            </button>
-            <p className="text-[9px] text-slate-700 mt-2 font-medium">Loads test data · No Supabase · Local only</p>
-          </div>
-        )}
       </div>
     </div>
   );
