@@ -1,0 +1,7 @@
+{
+  "name": "Flow OS - Cloud Edition",
+  "description": "A comprehensive productivity operating system featuring AI-powered task management, intelligent flashcard generation, habit tracking, and insightful daily reviews.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
