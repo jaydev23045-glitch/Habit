@@ -5,6 +5,7 @@ import { CheckCircle2, Circle, ArrowRight, CloudSun, ArrowDownRight, BookOpen, L
 import { StatsRadar } from './StatsRadar';
 import { useCharacter } from '../hooks/useCharacter';
 import { SystemBriefing } from './SystemBriefing';
+import { getFlowDate } from '../services/dateService';
 
 interface DashboardProps {
   data: AppData;
@@ -188,17 +189,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, toggleTask, toggleHa
                 No active habits in logic.
               </div>
             ) : (
-              habits.slice(0, 5).map(habit => (
-                <div key={habit.id} className="flex items-center justify-between p-4 bg-bgDark/40 rounded-2xl border border-transparent hover:border-white/5 transition-all">
-                    <span className="text-sm font-bold text-slate-300">{habit.title}</span>
-                    <button 
-                      onClick={() => toggleHabit(habit.id)}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${habit.completed ? 'bg-teal-500 text-bgDarker' : 'bg-white/5 text-slate-500 hover:text-white border border-white/5'}`}
-                    >
-                      {habit.completed ? 'Verified' : 'Log Entry'}
-                    </button>
-                </div>
-              ))
+              habits.slice(0, 5).map(habit => {
+                const flowToday = getFlowDate();
+                const isDoneToday = !!(habit.history && habit.history[flowToday]);
+                return (
+                  <div key={habit.id} className="flex items-center justify-between p-4 bg-bgDark/40 rounded-2xl border border-transparent hover:border-white/5 transition-all">
+                      <span className="text-sm font-bold text-slate-300">{habit.title}</span>
+                      <button 
+                        onClick={() => toggleHabit(habit.id)}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isDoneToday ? 'bg-teal-500 text-bgDarker' : 'bg-white/5 text-slate-500 hover:text-white border border-white/5'}`}
+                      >
+                        {isDoneToday ? 'Verified' : 'Log Entry'}
+                      </button>
+                  </div>
+                );
+              })
             )}
           </div>
         </div>

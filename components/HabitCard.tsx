@@ -1,8 +1,8 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Habit, Attribute } from '../types';
 import { Trash2, Clock, Check, Dumbbell, Brain, Shield, Zap, Heart, Edit2 } from 'lucide-react';
 import { audioService } from '../services/audioService';
+import { getFlowDate } from '../services/dateService';
 
 interface HabitCardProps {
   habit: Habit;
@@ -31,11 +31,16 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
   const [isEditing, setIsEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState(habit.title);
   const [editingAttribute, setEditingAttribute] = useState<Attribute>(habit.attribute || 'WIL');
+  const [editingTime, setEditingTime] = useState(habit.reminderTime || '08:00');
   
   const startTime = useRef<number | null>(null);
   const requestRef = useRef<number | null>(null);
 
   const HOLD_DURATION = 600; // ms
+
+  // Calculate today status dynamically
+  const todayStr = getFlowDate();
+  const isDoneToday = !!(habit.history && habit.history[todayStr]);
 
   // Calculate Consistency Color
   const getVelocityColor = (v: number) => {
@@ -60,7 +65,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
 
   // Press & Hold Logic
   const startHold = () => {
-    if (habit.completed) return; // Already done
+    if (isDoneToday) return; // Already done today
     setIsHolding(true);
     startTime.current = Date.now();
     
@@ -80,8 +85,8 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
   };
 
   const endHold = () => {
-    if (habit.completed) {
-        // If clicking a completed habit, just toggle it off (undo)
+    if (isDoneToday) {
+        // If clicking a completed habit, toggle it off (undo)
         toggleHabit(habit.id);
         return;
     }
@@ -91,6 +96,16 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
     setHoldProgress(0);
     if (requestRef.current) cancelAnimationFrame(requestRef.current);
     startTime.current = null;
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    startHold();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    endHold();
   };
 
   const triggerComplete = () => {
@@ -124,10 +139,22 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
             type="text"
             value={editingTitle}
             onChange={(e) => setEditingTitle(e.target.value)}
-            className="w-full bg-bgDark border border-cardBorder rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none"
+            className="w-full bg-bgDark border border-cardBorder rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none font-bold"
             placeholder="Protocol Title"
             autoFocus
           />
+
+          <div className="space-y-1.5 text-left">
+            <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Reminder Time</span>
+            <input 
+              type="time" 
+              value={editingTime} 
+              onChange={e => setEditingTime(e.target.value)}
+              className="w-full bg-bgDark border border-cardBorder rounded-xl px-4 py-2.5 text-xs text-white focus:border-primary outline-none font-bold"
+              style={{ colorScheme: 'dark' }}
+            />
+          </div>
+
           <div className="space-y-1.5 text-left">
             <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Attribute Alignment</span>
             <div className="flex flex-wrap gap-1.5 justify-center">
@@ -155,7 +182,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
           <button
             onClick={() => {
               if (editingTitle.trim()) {
-                updateHabit(habit.id, { title: editingTitle, attribute: editingAttribute });
+                updateHabit(habit.id, { title: editingTitle, attribute: editingAttribute, reminderTime: editingTime });
                 setIsEditing(false);
               }
             }}
@@ -169,7 +196,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
   }
 
   return (
-    <div className={`bg-cardBg border rounded-[2rem] p-6 flex flex-col items-center text-center relative group min-h-[340px] justify-between transition-all duration-500 shadow-xl overflow-hidden ${habit.completed ? 'border-emerald-500/30' : 'border-cardBorder hover:border-primary/50'}`}>
+    <div className={`bg-cardBg border rounded-[2rem] p-6 flex flex-col items-center text-center relative group min-h-[340px] justify-between transition-all duration-500 shadow-xl overflow-hidden ${isDoneToday ? 'border-emerald-500/30' : 'border-cardBorder hover:border-primary/50'}`}>
       
       {floatAnim && (
         <div 
@@ -181,13 +208,14 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
       )}
 
       {/* Visual Flare */}
-      <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent transition-opacity duration-500 ${habit.completed ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
+      <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent transition-opacity duration-500 ${isDoneToday ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}></div>
 
       <div className="absolute top-5 right-5 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all z-20">
         <button 
           onClick={() => {
             setEditingTitle(habit.title);
             setEditingAttribute(habit.attribute || 'WIL');
+            setEditingTime(habit.reminderTime || '08:00');
             setIsEditing(true);
           }}
           className="text-slate-700 hover:text-primary p-2 hover:bg-primary/10 rounded-xl"
@@ -204,7 +232,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
         </button>
       </div>
 
-      {/* Attribute Badge (Hexagon-ish look via CSS or just styled div) */}
+      {/* Attribute Badge */}
       <div className={`absolute top-5 left-5 px-2 py-1 rounded-lg border flex items-center gap-1.5 ${attr.border} ${attr.bg}`}>
          <Icon size={12} className={attr.color} />
          <span className={`text-[9px] font-black ${attr.color}`}>{habit.attribute}</span>
@@ -213,12 +241,12 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
       {/* Main Content */}
       <div className="w-full flex flex-col items-center flex-1 mt-8">
         <div className="flex items-center gap-2 mb-4">
-            <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${habit.completed ? 'text-emerald-500' : 'text-slate-600'}`}>
-                {habit.completed ? 'Protocol Verified' : 'Protocol Active'}
+            <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${isDoneToday ? 'text-emerald-500' : 'text-slate-600'}`}>
+                {isDoneToday ? 'Protocol Verified' : 'Protocol Active'}
             </span>
         </div>
         
-        <h3 className={`text-xl font-black mb-5 line-clamp-2 min-h-[3.5rem] flex items-center justify-center text-white leading-tight ${habit.completed ? 'opacity-60' : ''}`}>
+        <h3 className={`text-xl font-black mb-5 line-clamp-2 min-h-[3.5rem] flex items-center justify-center text-white leading-tight ${isDoneToday ? 'opacity-60' : ''}`}>
           {habit.title}
         </h3>
         
@@ -281,14 +309,15 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
         onMouseDown={startHold}
         onMouseUp={endHold}
         onMouseLeave={endHold}
-        onTouchStart={startHold}
-        onTouchEnd={endHold}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={endHold}
       >
           {/* Background Layer */}
-          <div className={`absolute inset-0 transition-colors duration-300 ${habit.completed ? 'bg-emerald-500' : 'bg-white/5 hover:bg-white/10 border border-white/10'}`}></div>
+          <div className={`absolute inset-0 transition-colors duration-300 ${isDoneToday ? 'bg-emerald-500' : 'bg-white/5 hover:bg-white/10 border border-white/10'}`}></div>
           
           {/* Fill Layer (Animation) */}
-          {!habit.completed && (
+          {!isDoneToday && (
               <div 
                 className="absolute inset-0 bg-primary opacity-30 transition-transform duration-75 ease-linear origin-left"
                 style={{ transform: `scaleX(${holdProgress / 100})` }}
@@ -297,7 +326,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
 
           {/* Content Layer */}
           <div className="absolute inset-0 flex items-center justify-center gap-3 pointer-events-none">
-             {habit.completed ? (
+             {isDoneToday ? (
                  <>
                    <Check size={20} className="text-bgDarker" strokeWidth={4} /> 
                    <span className="font-black text-[10px] uppercase tracking-[0.3em] text-bgDarker">Verified</span>

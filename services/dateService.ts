@@ -1,4 +1,3 @@
-
 /**
  * DATE & STREAK UTILITY SERVICE
  * Implements "Bulletproof" Logic for Timezones and Streak Freezes.
@@ -30,6 +29,15 @@ export const subtractDays = (dateStr: string, days: number): string => {
   return `${newY}-${newM}-${newD}`;
 };
 
+// Helper: Check if there are prior completions within freeze inventory reach
+const hasPriorCompletions = (history: Record<string, boolean>, startDateStr: string, maxLookahead: number): boolean => {
+  for (let k = 1; k <= maxLookahead; k++) {
+    const priorDate = subtractDays(startDateStr, k);
+    if (history[priorDate]) return true;
+  }
+  return false;
+};
+
 // 3. The Master Algorithm
 export const calculateStreak = (
   history: Record<string, boolean>, 
@@ -39,6 +47,7 @@ export const calculateStreak = (
   let streak = 0;
   let freezesUsed = 0;
   let isFrozen = false;
+  let remainingFreezes = freezeInventory;
   
   const today = getFlowDate();
   
@@ -48,7 +57,6 @@ export const calculateStreak = (
   }
 
   // Iterate backwards efficiently
-  // We check up to 365 days or until broken
   for (let i = 1; i < 365; i++) {
     const checkDate = subtractDays(today, i);
     const completed = history[checkDate];
@@ -56,15 +64,13 @@ export const calculateStreak = (
     if (completed) {
       streak++;
     } else {
-      // MISSED DAY -> Check Freeze Logic
-      if (freezeInventory > 0) {
-        freezeInventory--; // Consume a freeze
+      // MISSED DAY -> Only consume freeze if there are completions further back
+      if (remainingFreezes > 0 && hasPriorCompletions(history, checkDate, remainingFreezes)) {
+        remainingFreezes--;
         freezesUsed++;
-        isFrozen = true; 
-        // We do NOT increment streak on a frozen day, 
-        // but we continue the chain (it bridges the gap)
+        isFrozen = true;
       } else {
-        // No freezes left, chain broken
+        // No freezes left or no prior completions to connect to -> chain broken
         break;
       }
     }
