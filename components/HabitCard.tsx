@@ -35,6 +35,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
   
   const startTime = useRef<number | null>(null);
   const requestRef = useRef<number | null>(null);
+  const hasCompletedInThisTouch = useRef(false);
 
   const HOLD_DURATION = 600; // ms
 
@@ -66,6 +67,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
   // Press & Hold Logic
   const startHold = () => {
     if (isDoneToday) return; // Already done today
+    hasCompletedInThisTouch.current = false; // Reset lock flag
     setIsHolding(true);
     startTime.current = Date.now();
     
@@ -85,8 +87,14 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
   };
 
   const endHold = () => {
+    if (hasCompletedInThisTouch.current) {
+        // If the hold JUST completed the habit, lifting the finger shouldn't immediately undo it!
+        hasCompletedInThisTouch.current = false; // reset for next interactions
+        return;
+    }
+
     if (isDoneToday) {
-        // If clicking a completed habit, toggle it off (undo)
+        // If tapping a previously completed habit, toggle it off (undo)
         toggleHabit(habit.id);
         return;
     }
@@ -109,6 +117,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
   };
 
   const triggerComplete = () => {
+    hasCompletedInThisTouch.current = true; // Lock the undo behavior for when the user lifts finger
     setIsHolding(false);
     setHoldProgress(100);
     
