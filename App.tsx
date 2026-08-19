@@ -71,7 +71,7 @@ export default function App() {
   });
 
   const [currentView, setCurrentView] = useState<ViewName>('dashboard');
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getFlowDate());
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncStatus, setLastSyncStatus] = useState<'success' | 'fail' | 'idle'>('idle');
   const [isAuthLoading, setIsAuthLoading] = useState(false);

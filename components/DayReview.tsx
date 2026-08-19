@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppData, Task, DayReflection } from '../types';
 import { Save, Sunset, Star, Zap, Activity, CheckCircle2, Circle, ArrowRight, CalendarClock, TrendingUp, AlertCircle, RotateCcw, Smile, Battery, MessageSquare } from 'lucide-react';
+import { subtractDays } from '../services/dateService';
 
 interface DayReviewProps {
   data: AppData;
@@ -19,9 +20,7 @@ export const DayReview: React.FC<DayReviewProps> = ({ data, updateTask, selected
   const [isSaved, setIsSaved] = useState(false);
 
   // Date Logic
-  const tomorrow = new Date(selectedDate);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+  const tomorrowStr = subtractDays(selectedDate, -1);
 
   // Data Aggregation
   const activeTasks = data.tasks.filter(t => t.date === selectedDate);

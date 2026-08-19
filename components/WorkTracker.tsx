@@ -68,9 +68,30 @@ export const WorkTracker: React.FC<WorkTrackerProps> = ({ sessions, onAddSession
     }
   }, []);
 
+  // Wake Lock for mobile screens
+  const wakeLockRef = useRef<any>(null);
+
+  const requestWakeLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+      }
+    } catch (err) {}
+  };
+
+  const releaseWakeLock = async () => {
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      } catch (err) {}
+    }
+  };
+
   // Timer interval ticking and auto-stop validation
   useEffect(() => {
     if (isTracking) {
+      requestWakeLock();
       const activeStart = localStorage.getItem('flow-os-active-work-start');
       if (activeStart) {
         const startTime = parseInt(activeStart, 10);
@@ -83,6 +104,7 @@ export const WorkTracker: React.FC<WorkTrackerProps> = ({ sessions, onAddSession
             if (timerIntervalRef.current) {
               clearInterval(timerIntervalRef.current);
             }
+            releaseWakeLock();
             saveSessionAndReset(limit, startTime);
           } else {
             setElapsed(diff > 0 ? diff : 0);
@@ -90,6 +112,7 @@ export const WorkTracker: React.FC<WorkTrackerProps> = ({ sessions, onAddSession
         }, 1000);
       }
     } else {
+      releaseWakeLock();
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
         timerIntervalRef.current = null;
@@ -97,6 +120,7 @@ export const WorkTracker: React.FC<WorkTrackerProps> = ({ sessions, onAddSession
     }
 
     return () => {
+      releaseWakeLock();
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
       }

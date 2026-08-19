@@ -99,9 +99,30 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onSessionComplete }) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Wake Lock for mobile screens
+  const wakeLockRef = useRef<any>(null);
+
+  const requestWakeLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+      }
+    } catch (err) {}
+  };
+
+  const releaseWakeLock = async () => {
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      } catch (err) {}
+    }
+  };
+
   // Effect to manage the background-safe interval
   useEffect(() => {
     if (isActive) {
+      requestWakeLock();
       startTimeRef.current = Date.now();
       secondsRemainingOnStartRef.current = timeLeft;
       timerRef.current = window.setInterval(() => {
@@ -111,8 +132,11 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onSessionComplete }) => {
           setTimeLeft(nextTimeLeft);
         }
       }, 200);
+    } else {
+      releaseWakeLock();
     }
     return () => {
+      releaseWakeLock();
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;

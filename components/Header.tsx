@@ -4,6 +4,7 @@ import { UserProfile, AppData, ViewName } from '../types';
 import { Bell, Trophy, Calendar, AlertTriangle, RotateCcw, Volume2, VolumeX, X, Brain, Zap, Clock } from 'lucide-react';
 import { voiceService } from '../services/voiceService';
 import { audioService } from '../services/audioService';
+import { getFlowDate } from '../services/dateService';
 
 interface HeaderProps {
   title: string;
@@ -46,15 +47,7 @@ export const Header: React.FC<HeaderProps> = ({ title, user, setView, selectedDa
     }
   };
 
-  const getTodayString = () => {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const today = getTodayString();
+  const today = getFlowDate();
   const overdueTasks = data.tasks.filter(t => !t.completed && t.date < today);
   const dueTopics = data.topics.filter(t => t.status === 'active' && t.nextReviewDate && t.nextReviewDate <= today);
   const notifCount = overdueTasks.length + dueTopics.length;
