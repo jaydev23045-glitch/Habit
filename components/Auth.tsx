@@ -100,6 +100,13 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                     <p>• <strong>Or to bypass this requirement</strong>: Go to your <strong>Supabase Dashboard</strong> &gt; <strong>Authentication</strong> &gt; <strong>Providers</strong> &gt; <strong>Email</strong>, turn off the <strong>"Confirm email"</strong> switch, and click Save.</p>
                   </div>
                 )}
+                {error.toLowerCase().includes('failed to fetch') && (
+                  <div className="bg-amber-500/5 border border-amber-500/20 text-amber-400/80 p-4 rounded-xl text-[10px] leading-relaxed font-semibold text-left space-y-1.5 border border-dashed">
+                    <div className="font-bold text-amber-400 uppercase tracking-widest text-[9px] mb-1">Network / Database Sleep Error:</div>
+                    <p>• <strong>Database Paused?</strong> Free tier Supabase projects go to sleep after 7 days of inactivity. Go to your Supabase dashboard and click "Restore Project".</p>
+                    <p>• <strong>Ad Blocker?</strong> Some aggressive browser extensions (like Brave Shields) block database connections. Try turning them off.</p>
+                  </div>
+                )}
               </div>
             )}
 
