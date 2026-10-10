@@ -7,7 +7,7 @@ import { Dashboard } from './components/Dashboard';
 import { TaskManager } from './components/TaskManager';
 import { Settings } from './components/Settings';
 import { HabitTracker } from './components/HabitTracker';
-import { Auth } from './components/Auth';
+
 import { Forecast } from './components/Forecast';
 import { FocusMode } from './components/FocusMode';
 import { Learning } from './components/Learning';
@@ -28,8 +28,7 @@ import { getReportTriggers } from './services/persistenceService';
 import { useVoiceSentinel } from './hooks/useVoiceSentinel';
 import { useCharacter } from './hooks/useCharacter';
 import { getFlowDate, calculateStreak, calculateVelocity } from './services/dateService';
-import { signIn, signUp, signOut, pushVault, pullVault } from './services/cloudService';
-import { supabase } from './services/supabaseClient';
+
 
 // Supabase powers the backend — no Google Sheets needed
 const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
@@ -57,24 +56,9 @@ const INITIAL_DATA: AppData = {
 };
 
 export default function App() {
-  // Supabase session — check BOTH our email key AND Supabase's own session key
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const hasEmail = !!localStorage.getItem('flow-os-auth-email');
-    const hasSupabaseSession = !!localStorage.getItem('flow-os-auth');
-    return hasEmail && hasSupabaseSession;
-  });
-
   const [isBooted, setIsBooted] = useState(false);
-
-  const [userEmail, setUserEmail] = useState<string>(() => {
-    return localStorage.getItem('flow-os-auth-email') || '';
-  });
-
   const [currentView, setCurrentView] = useState<ViewName>('dashboard');
   const [selectedDate, setSelectedDate] = useState(getFlowDate());
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [lastSyncStatus, setLastSyncStatus] = useState<'success' | 'fail' | 'idle'>('idle');
-  const [isAuthLoading, setIsAuthLoading] = useState(false);
   const hasNarratedToday = useRef(false);
   
   const [activeMomentum, setActiveMomentum] = useState<MomentumSession | null>(null);
@@ -97,43 +81,6 @@ export default function App() {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Monitor Supabase session states to enable seamless 7-day+ persistence
-  useEffect(() => {
-    const initSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email) {
-          setIsAuthenticated(true);
-          setUserEmail(session.user.email);
-          localStorage.setItem('flow-os-auth-email', session.user.email);
-        } else {
-          setIsAuthenticated(false);
-          setUserEmail('');
-          localStorage.removeItem('flow-os-auth-email');
-        }
-      } catch (e) {
-        console.error('[Flow OS] Failed to pull auth session:', e);
-      }
-    };
-    initSession();
-
-    // Listen to token refreshes and log-outs across browser tabs
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user?.email) {
-        setIsAuthenticated(true);
-        setUserEmail(session.user.email);
-        localStorage.setItem('flow-os-auth-email', session.user.email);
-      } else {
-        setIsAuthenticated(false);
-        setUserEmail('');
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
     };
   }, []);
 
@@ -243,35 +190,7 @@ export default function App() {
 
   // Persist state to local storage immediately whenever data changes
   useEffect(() => {
-    if (isAuthenticated) {
-      localStorage.setItem('flow-os-data', JSON.stringify(data));
-    }
-  }, [data, isAuthenticated]);
-
-  // ── Supabase Cloud Sync ──────────────────────────────────────────────────
-  const syncWithCloud = useCallback(async (direction: 'push' | 'pull'): Promise<AppData | null> => {
-    setIsSyncing(true);
-    try {
-      if (direction === 'push') {
-        await pushVault(data);
-        setLastSyncStatus('success');
-        return data;
-      } else {
-        const cloudData = await pullVault();
-        if (cloudData) {
-          setLastSyncStatus('success');
-          return cloudData;
-        }
-        return null;
-      }
-    } catch (e) {
-      console.error('[Flow OS] Sync error:', e);
-      setLastSyncStatus('fail');
-      return null;
-    } finally {
-      setIsSyncing(false);
-      setTimeout(() => setLastSyncStatus('idle'), 3000);
-    }
+    localStorage.setItem('flow-os-data', JSON.stringify(data));
   }, [data]);
 
   // Deprecated manual narration in favor of SystemBoot briefing
@@ -293,7 +212,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (isAuthenticated && data.user.lastLogin) {
+    if (data.user.lastLogin) {
       const triggers = getReportTriggers(data.user.lastLogin);
       if (triggers.length > 0) {
         triggers.forEach(range => {
@@ -322,80 +241,11 @@ export default function App() {
         });
       }
     }
-  }, [isAuthenticated]);
+  }, [data.user.lastLogin]);
 
-  // ── Supabase Auth ────────────────────────────────────────────────────────
-  const handleAuth = async (email: string, pass: string, isSignup: boolean) => {
-    setIsAuthLoading(true);
-    const cleanEmail = email.toLowerCase().trim();
-    
-    try {
-      if (isSignup) {
-        // Supabase handles password hashing (bcrypt) — no plaintext storage
-        await signUp(cleanEmail, pass);
-        const newData: AppData = {
-          ...INITIAL_DATA,
-          user: {
-            ...INITIAL_DATA.user,
-            email: cleanEmail,
-            name: cleanEmail.split('@')[0],
-            lastLogin: new Date().toISOString()
-          }
-        };
-        setData(newData);
-        setUserEmail(cleanEmail);
-        setIsAuthenticated(true);
-        localStorage.setItem('flow-os-auth-email', cleanEmail);
-        audioService.playSuccess();
-        // Push initial empty vault to Supabase
-        await pushVault(newData);
-      } else {
-        // Supabase validates credentials securely
-        await signIn(cleanEmail, pass);
-        // Pull existing vault data from Supabase
-        const cloudData = await pullVault();
-        if (cloudData) {
-          const mergedUser = {
-            ...INITIAL_DATA.user,
-            ...cloudData.user,
-            stats: { ...INITIAL_DATA.user.stats, ...(cloudData.user?.stats || {}) },
-            freezeInventory: cloudData.user?.freezeInventory ?? 1,
-            lastLogin: new Date().toISOString()
-          };
-          setData({ ...cloudData, user: mergedUser });
-        }
-        setUserEmail(cleanEmail);
-        setIsAuthenticated(true);
-        localStorage.setItem('flow-os-auth-email', cleanEmail);
-        audioService.playSuccess();
-      }
-    } catch (err: any) {
-      throw new Error(err.message || 'Authentication failed.');
-    } finally {
-      setIsAuthLoading(false);
-    }
-  };
 
-  const handleLogout = async () => {
-    await signOut();                              // Clears Supabase session
-    setIsAuthenticated(false);
-    setIsBooted(false);
-    setUserEmail('');
-    localStorage.removeItem('flow-os-auth-email');
-    localStorage.removeItem('flow-os-data');
-    setCurrentView('dashboard');
-    setData(INITIAL_DATA);
-    hasNarratedToday.current = false;
-  };
 
-  // Auto-push to Supabase every 5 minutes when data changes
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    if (data.user.cloudConfig?.autoSync !== false) {
-      const timer = setTimeout(() => syncWithCloud('push'), SYNC_INTERVAL_MS);
-      return () => clearTimeout(timer);
-    }
-  }, [data, isAuthenticated, syncWithCloud]);
+
 
   const updateData = useCallback((updates: Partial<AppData> | ((prev: AppData) => AppData)) => {
     setData(prev => {
@@ -655,7 +505,7 @@ export default function App() {
     audioService.playAction();
   };
 
-  if (!isAuthenticated) return <Auth onLogin={handleAuth} />;
+
 
   if (!isBooted) return <SystemBoot data={data} onBootComplete={() => setIsBooted(true)} />;
 
@@ -706,43 +556,9 @@ export default function App() {
         onClose={() => setShowLevelUp(false)} 
       />
 
-      {isAuthLoading && (
-        <div className="fixed inset-0 z-[1000] bg-bgDark flex flex-col items-center justify-center animate-fade-in px-6 text-center">
-           <Loader2 className="animate-spin text-primary mb-4" size={48} />
-           <div className="flex items-center gap-2 text-slate-400 font-bold uppercase tracking-widest text-sm">
-             <Lock size={16} /> Establishing Secure Vault Connection...
-           </div>
-        </div>
-      )}
-
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden ml-0 lg:ml-72 pb-20 lg:pb-0">
         <Header title={currentView.toUpperCase()} user={data.user} setView={setCurrentView} selectedDate={selectedDate} setSelectedDate={setSelectedDate} data={data} />
         
-        {/* Sync Status Badge */}
-        <div className="fixed bottom-24 lg:bottom-6 right-6 z-50 pointer-events-none">
-           <div className={`flex items-center gap-3 px-5 py-2.5 rounded-2xl border backdrop-blur-md transition-all duration-500 shadow-2xl ${
-             isSyncing ? 'bg-primary/20 border-primary text-primary scale-105' : 
-             lastSyncStatus === 'success' ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' :
-             lastSyncStatus === 'fail' ? 'bg-red-500/20 border-red-500 text-red-400' :
-             'bg-slate-800/40 border-slate-700/50 text-slate-500 opacity-60'
-           }`}>
-              {isSyncing ? <Loader2 className="animate-spin" size={14} /> : 
-               lastSyncStatus === 'fail' ? <CloudOff size={14} /> : 
-               <ShieldCheck size={16} className="text-emerald-400" />}
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-0.5">
-                  {isSyncing ? 'Syncing...' : lastSyncStatus === 'success' ? 'Vault Verified' : 'Local Backup'}
-                </span>
-                <span className="text-[8px] opacity-50 font-medium truncate max-w-[120px]">{userEmail}</span>
-              </div>
-              {!isSyncing && (
-                <button onClick={() => syncWithCloud('push')} className="pointer-events-auto ml-2 p-1 hover:bg-white/10 rounded transition-colors" title="Force Sync">
-                  <RefreshCw size={12} />
-                </button>
-              )}
-           </div>
-        </div>
-
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
           <div className="max-w-7xl mx-auto">
             {currentView === 'dashboard' && <Dashboard data={data} toggleTask={toggleTask} toggleHabit={toggleHabit} switchView={setCurrentView} selectedDate={selectedDate} convertPotential={convertPotential} dismissPotential={dismissPotential} />}
@@ -761,7 +577,7 @@ export default function App() {
             )}
             {currentView === 'review' && <DayReview data={data} updateTask={updateTask} selectedDate={selectedDate} onSaveReview={saveDayReview} />}
             {currentView === 'reports' && <Reports data={data} />}
-            {currentView === 'settings' && <Settings user={data.user} data={data} onImport={(newData) => setData(newData)} updateUser={(u) => updateData(prev => ({...prev, user: {...prev.user, ...u}}))} onDeployChanges={async () => { await syncWithCloud('push'); }} onManualPull={async () => { await syncWithCloud('pull'); }} resetData={() => { localStorage.removeItem('flow-os-data'); setData(INITIAL_DATA); }} onLogout={handleLogout} />}
+            {currentView === 'settings' && <Settings user={data.user} data={data} onImport={(newData) => setData(newData)} updateUser={(u) => updateData(prev => ({...prev, user: {...prev.user, ...u}}))} resetData={() => { localStorage.removeItem('flow-os-data'); setData(INITIAL_DATA); }} />}
           </div>
         </div>
       </main>

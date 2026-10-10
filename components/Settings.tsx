@@ -8,23 +8,16 @@ interface SettingsProps {
   user: UserProfile;
   updateUser: (u: Partial<UserProfile>) => void;
   resetData: () => void;
-  onLogout: () => void;
   data?: AppData;
   onImport?: (data: AppData) => void;
-  onDeployChanges?: () => Promise<void | any>;
-  onManualPull?: () => Promise<void | any>;
 }
 
-export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData, onLogout, data, onImport, onDeployChanges, onManualPull }) => {
+export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData, data, onImport }) => {
   const [name, setName] = useState(user.name);
-  const [cloud, setCloud] = useState<CloudConfig>(user.cloudConfig || { provider: 'supabase', autoSync: true });
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [isPulling, setIsPulling] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setName(user.name);
-    setCloud(user.cloudConfig);
   }, [user]);
 
   const handleVoiceToggle = async () => {
@@ -38,32 +31,9 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
     }
   };
 
-  const handleSave = async () => {
-    updateUser({ name, cloudConfig: cloud });
-    if (onDeployChanges) {
-      setIsDeploying(true);
-      try {
-        await onDeployChanges();
-        audioService.playSuccess();
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsDeploying(false);
-      }
-    }
-  };
-
-  const handleManualPull = async () => {
-    if (!onManualPull) return;
-    setIsPulling(true);
-    try {
-      await onManualPull();
-      audioService.playSuccess();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsPulling(false);
-    }
+  const handleSave = () => {
+    updateUser({ name });
+    audioService.playSuccess();
   };
 
   const handleExport = () => {
@@ -147,46 +117,6 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
           </div>
         </div>
 
-        {/* Database & Cloud Synchronization */}
-        <div className="bg-cardBg border border-cardBorder rounded-[2rem] p-6 sm:p-8 shadow-xl space-y-6">
-          <h3 className="text-xs font-black uppercase tracking-[0.35em] text-emerald-400 border-b border-white/5 pb-3 flex items-center gap-2">
-            <Globe size={14} /> Cloud Vault Backup
-          </h3>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-2xl">
-              <div>
-                <div className="text-sm font-bold text-emerald-400">Postgres Auto-Sync</div>
-                <div className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold mt-0.5">Realtime vault updates</div>
-              </div>
-              <input 
-                type="checkbox" 
-                checked={cloud.autoSync} 
-                onChange={e => setCloud({...cloud, autoSync: e.target.checked})} 
-                className="w-5 h-5 accent-emerald-500 cursor-pointer rounded" 
-              />
-            </div>
-
-            <button 
-              onClick={handleManualPull}
-              disabled={isPulling}
-              className="w-full flex items-center justify-center gap-2 py-3.5 bg-bgDark border border-cardBorder hover:border-emerald-500 hover:text-emerald-400 text-slate-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-            >
-              {isPulling ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              Pull Cloud Vault Data
-            </button>
-
-            {/* Security Guard Info Panel */}
-            <div className="bg-bgDark/40 border border-white/5 rounded-2xl p-4 space-y-1.5 text-left">
-              <div className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-wider">
-                <Shield size={12} className="text-emerald-400" /> Database Security Guard
-              </div>
-              <div className="text-[9px] text-slate-500 leading-relaxed font-semibold">
-                This project utilizes <strong className="text-emerald-400">Row-Level Security (RLS)</strong>. Your vault rows are only read/write accessible via matching authenticated sessions. Public credentials do not expose user records, and communication is encrypted with HTTPS.
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Data Portability (JSON Snapshots) */}
         <div className="bg-cardBg border border-cardBorder rounded-[2rem] p-6 sm:p-8 shadow-xl space-y-6">
@@ -224,19 +154,12 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
             <ShieldAlert size={14} /> System Operations
           </h3>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <button 
               onClick={handleResetData}
               className="py-4 border border-red-500/20 hover:border-red-500 bg-red-500/5 hover:bg-red-500/10 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 text-center flex items-center justify-center"
             >
               Flush Local Cache
-            </button>
-
-            <button 
-              onClick={onLogout}
-              className="py-4 border border-slate-700/50 hover:border-slate-500 bg-slate-800/30 hover:bg-slate-800/60 text-slate-400 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 text-center flex items-center justify-center gap-2"
-            >
-              <LogOut size={14} /> Log Out
             </button>
           </div>
         </div>
@@ -245,11 +168,10 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
       {/* Save Button block */}
       <div className="pt-6 flex justify-end">
         <button 
-          disabled={isDeploying} 
           onClick={handleSave} 
           className="w-full sm:w-auto px-12 py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
         >
-          {isDeploying ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          <Save size={16} />
           Save Settings
         </button>
       </div>
