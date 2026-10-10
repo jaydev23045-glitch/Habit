@@ -18,6 +18,7 @@ import { HistoricalReportModal } from './components/HistoricalReportModal';
 import { LevelUpModal } from './components/LevelUpModal';
 import { WorkTracker } from './components/WorkTracker';
 import { SystemBoot } from './components/SystemBoot';
+import { VaultUnlock } from './components/VaultUnlock';
 import { Task, Habit, LearningTopic, ViewName, AppData, UserProfile, HorizonPotential, MomentumSession, TopicStatus, HistoricalReport, ReportRange, DayReflection, WorkSession } from './types';
 
 import { voiceService } from './services/voiceService';
@@ -186,7 +187,12 @@ export default function App() {
     prevLevelRef.current = level;
   }, [level, isBooted]);
 
+  // Vault Unlock State
+  const [activeGeminiKey, setActiveGeminiKey] = useState<string>('');
+  const [showVaultUnlock, setShowVaultUnlock] = useState(false);
+
   // Activate Voice Sentinel
+
   useVoiceSentinel(data.tasks, data.user.voiceEnabled && isBooted);
 
   // AI Voice Command Integration
@@ -245,7 +251,18 @@ export default function App() {
     }
   };
 
-  const { isListening, transcript, isProcessing, startListening, stopListening } = useVoiceToTask(data.user.geminiKey, handleAICommandResult);
+  const { isListening, transcript, isProcessing, startListening, stopListening } = useVoiceToTask(activeGeminiKey, handleAICommandResult);
+
+  const handleMicClick = () => {
+    if (activeGeminiKey) {
+      startListening();
+    } else if (data.user.encryptedGeminiKey) {
+      setShowVaultUnlock(true);
+    } else {
+      alert("Please configure your Gemini API Key in Settings first.");
+      setCurrentView('settings');
+    }
+  };
 
 
   // Persist state to local storage immediately whenever data changes
@@ -610,6 +627,23 @@ export default function App() {
         </div>
       )}
 
+      {showVaultUnlock && data.user.encryptedGeminiKey && (
+        <VaultUnlock 
+          encryptedKey={data.user.encryptedGeminiKey}
+          onUnlock={(decryptedKey) => {
+            setActiveGeminiKey(decryptedKey);
+            setShowVaultUnlock(false);
+            audioService.playSuccess();
+            // Start listening automatically after unlock
+            setTimeout(() => {
+              const startBtn = document.getElementById('mic-button');
+              if (startBtn) startBtn.click();
+            }, 100);
+          }}
+          onCancel={() => setShowVaultUnlock(false)}
+        />
+      )}
+
       <LevelUpModal 
         level={level} 
         isOpen={showLevelUp} 
@@ -634,7 +668,8 @@ export default function App() {
             </button>
           ) : (
             <button 
-              onClick={startListening}
+              id="mic-button"
+              onClick={handleMicClick}
               className="bg-bgDark/80 backdrop-blur border border-primary/50 text-primary hover:text-white hover:bg-primary p-4 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
             >
               <Mic size={24} className="group-hover:scale-110 transition-transform" />

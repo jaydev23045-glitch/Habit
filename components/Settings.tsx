@@ -12,14 +12,18 @@ interface SettingsProps {
   onImport?: (data: AppData) => void;
 }
 
+import { cryptoService } from '../services/cryptoService';
+
 export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData, data, onImport }) => {
   const [name, setName] = useState(user.name);
-  const [geminiKey, setGeminiKey] = useState(user.geminiKey || '');
+  const [rawGeminiKey, setRawGeminiKey] = useState('');
+  const [vaultPassword, setVaultPassword] = useState('');
+  const [isEncrypting, setIsEncrypting] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setName(user.name);
-    setGeminiKey(user.geminiKey || '');
   }, [user]);
 
   const handleVoiceToggle = async () => {
@@ -33,8 +37,23 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
     }
   };
 
-  const handleSave = () => {
-    updateUser({ name, geminiKey });
+  const handleSave = async () => {
+    if (rawGeminiKey && !vaultPassword) {
+      alert("You must provide a Vault Password to securely encrypt your Gemini API Key.");
+      return;
+    }
+    
+    setIsEncrypting(true);
+    let payload = user.encryptedGeminiKey;
+    
+    if (rawGeminiKey && vaultPassword) {
+      payload = await cryptoService.encrypt(rawGeminiKey, vaultPassword);
+    }
+    
+    updateUser({ name, encryptedGeminiKey: payload });
+    setRawGeminiKey('');
+    setVaultPassword('');
+    setIsEncrypting(false);
     audioService.playSuccess();
   };
 
@@ -117,16 +136,37 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
               </button>
             </div>
 
-            <div className="space-y-2 mt-4 pt-4 border-t border-white/5">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Gemini AI API Key</label>
-              <input 
-                type="password" 
-                value={geminiKey} 
-                onChange={e => setGeminiKey(e.target.value)} 
-                placeholder="AI Voice Assistant disabled..."
-                className="w-full bg-bgDark border border-cardBorder rounded-2xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none transition-all font-semibold" 
-              />
-              <p className="text-[9px] text-slate-500 px-2">Store your Google Gemini API key here to enable voice-to-task AI features.</p>
+            <div className="space-y-4 mt-4 pt-4 border-t border-white/5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 flex items-center justify-between">
+                  <span>Gemini AI API Key</span>
+                  {user.encryptedGeminiKey && <span className="text-emerald-400">Encrypted Key Saved</span>}
+                </label>
+                <input 
+                  type="password" 
+                  value={rawGeminiKey} 
+                  onChange={e => setRawGeminiKey(e.target.value)} 
+                  placeholder={user.encryptedGeminiKey ? "Enter new key to overwrite..." : "Paste Gemini API Key here..."}
+                  className="w-full bg-bgDark border border-cardBorder rounded-2xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none transition-all font-semibold" 
+                />
+              </div>
+
+              {rawGeminiKey && (
+                <div className="space-y-2 animate-fade-in">
+                  <label className="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Create Vault Password</label>
+                  <input 
+                    type="password" 
+                    value={vaultPassword} 
+                    onChange={e => setVaultPassword(e.target.value)} 
+                    placeholder="Type a password to encrypt this key..."
+                    className="w-full bg-primary/5 border border-primary/30 rounded-2xl px-4 py-3.5 text-sm text-primary focus:border-primary outline-none transition-all font-semibold" 
+                  />
+                  <p className="text-[9px] text-slate-500 px-2 leading-relaxed">
+                    This password will use military-grade AES-256 to scramble your API key before saving it to your hard drive. 
+                    You will need this password every time you open the app to use the AI.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -182,11 +222,12 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
       {/* Save Button block */}
       <div className="pt-6 flex justify-end">
         <button 
+          disabled={isEncrypting}
           onClick={handleSave} 
           className="w-full sm:w-auto px-12 py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95 disabled:opacity-50"
         >
-          <Save size={16} />
-          Save Settings
+          {isEncrypting ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {isEncrypting ? 'Encrypting Vault...' : 'Save Settings'}
         </button>
       </div>
     </div>
