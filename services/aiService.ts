@@ -26,16 +26,22 @@ Format:
 `;
 
   try {
-    const response = await ai.models.generateContent({
+    const apiCall = ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
     
+    // 8 second timeout for slow internet
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 8000)
+    );
+    
+    const response = await Promise.race([apiCall, timeoutPromise]) as any;
+    
     const text = response.text || '';
-    // Strip possible markdown backticks if AI ignores the rule
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     return JSON.parse(cleanJson);
-  } catch (err) {
+  } catch (err: any) {
     console.error("Gemini Parse Error:", err);
     throw err;
   }

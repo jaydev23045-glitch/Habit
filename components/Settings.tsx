@@ -167,6 +167,16 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
                   </p>
                 </div>
               )}
+              
+              <div className="bg-bgDark/40 border border-white/5 rounded-2xl p-4 mt-4 space-y-1.5 text-left">
+                <div className="flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-wider">
+                  Data Privacy Consent
+                </div>
+                <div className="text-[9px] text-slate-500 leading-relaxed font-semibold">
+                  By enabling the AI Voice Assistant, you consent to sending your spoken transcripts to Google's servers for processing. <strong className="text-primary">No data is permanently stored outside your browser.</strong> We are a zero-knowledge, local-first application.
+                </div>
+              </div>
+
             </div>
           </div>
         </div>

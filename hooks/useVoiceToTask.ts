@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { parseVoiceCommand } from '../services/aiService';
 import { audioService } from '../services/audioService';
+import { voiceService } from '../services/voiceService';
 
 export interface VoiceCommandResult {
   type: 'TASK' | 'HABIT' | 'WORK_SESSION' | 'UNKNOWN';
@@ -83,9 +84,15 @@ export function useVoiceToTask(apiKey?: string, onResult?: (res: VoiceCommandRes
       }
       setIsProcessing(false);
       audioService.playSuccess();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       setIsProcessing(false);
+      
+      if (e.message === "NETWORK_TIMEOUT" || !navigator.onLine) {
+        voiceService.speak("Network connection is too slow. Please log your task manually for now.");
+      } else {
+        voiceService.speak("AI processing failed. Check your API key or try again later.");
+      }
     }
   };
 
