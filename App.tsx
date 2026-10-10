@@ -21,7 +21,8 @@ import { SystemBoot } from './components/SystemBoot';
 import { Task, Habit, LearningTopic, ViewName, AppData, UserProfile, HorizonPotential, MomentumSession, TopicStatus, HistoricalReport, ReportRange, DayReflection, WorkSession } from './types';
 
 import { voiceService } from './services/voiceService';
-import { CloudOff, Loader2, Lock, RefreshCw, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { CloudOff, Loader2, Lock, RefreshCw, ShieldCheck, AlertTriangle, Mic, Sparkles } from 'lucide-react';
+import { useVoiceToTask, VoiceCommandResult } from './hooks/useVoiceToTask';
 import { v4 as uuidv4 } from 'uuid';
 import { audioService } from './services/audioService';
 import { getReportTriggers } from './services/persistenceService';
@@ -187,6 +188,65 @@ export default function App() {
 
   // Activate Voice Sentinel
   useVoiceSentinel(data.tasks, data.user.voiceEnabled && isBooted);
+
+  // AI Voice Command Integration
+  const handleAICommandResult = (res: VoiceCommandResult) => {
+    if (res.type === 'TASK' && res.title) {
+      updateData(prev => ({
+        ...prev,
+        tasks: [...(prev.tasks || []), { 
+          id: uuidv4(), 
+          title: res.title!, 
+          time: res.time || '09:00', 
+          type: 'task', 
+          priority: 'medium', 
+          date: getFlowDate(), 
+          completed: false 
+        }]
+      }));
+      voiceService.speak("Task registered.");
+    } else if (res.type === 'HABIT' && res.title) {
+      updateData(prev => ({
+        ...prev,
+        habits: [...(prev.habits || []), { 
+          id: uuidv4(), 
+          title: res.title!, 
+          type: 'habit', 
+          frequency: 'daily', 
+          history: {}, 
+          streak: 0, 
+          completed: false, 
+          velocity: 0, 
+          createdAt: new Date().toISOString(),
+          attribute: 'WIL',
+          baseXp: 10
+        }]
+      }));
+      voiceService.speak("Habit initialized.");
+    } else if (res.type === 'WORK_SESSION' && res.title) {
+      updateData(prev => ({
+        ...prev,
+        workSessions: [...(prev.workSessions || []), {
+          id: uuidv4(),
+          date: getFlowDate(),
+          startedAt: new Date(Date.now() - (res.duration || 25) * 60000).toISOString(),
+          endedAt: new Date().toISOString(),
+          durationSeconds: (res.duration || 25) * 60,
+          details: res.title!
+        }],
+        user: {
+          ...prev.user,
+          xp: (prev.user.xp || 0) + (res.duration || 25)
+        }
+      }));
+      voiceService.speak("Work session logged.");
+    } else {
+      voiceService.speak("Command unrecognized. Please repeat clearly.");
+    }
+  };
+
+  const { isListening, transcript, isProcessing, startListening, stopListening } = useVoiceToTask(data.user.geminiKey, handleAICommandResult);
+
 
   // Persist state to local storage immediately whenever data changes
   useEffect(() => {
@@ -559,6 +619,34 @@ export default function App() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden ml-0 lg:ml-72 pb-20 lg:pb-0">
         <Header title={currentView.toUpperCase()} user={data.user} setView={setCurrentView} selectedDate={selectedDate} setSelectedDate={setSelectedDate} data={data} />
         
+        {/* AI Voice Assistant FAB */}
+        <div className="fixed bottom-24 lg:bottom-10 right-6 lg:right-10 z-[100]">
+          {isProcessing ? (
+            <div className="bg-primary text-white p-4 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.6)] animate-pulse flex items-center justify-center">
+              <Sparkles size={24} className="animate-spin" />
+            </div>
+          ) : isListening ? (
+            <button 
+              onClick={stopListening}
+              className="bg-red-500 text-white p-4 rounded-full shadow-[0_0_30px_rgba(239,68,68,0.6)] animate-bounce flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+            >
+              <Mic size={24} className="animate-pulse" />
+            </button>
+          ) : (
+            <button 
+              onClick={startListening}
+              className="bg-bgDark/80 backdrop-blur border border-primary/50 text-primary hover:text-white hover:bg-primary p-4 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
+            >
+              <Mic size={24} className="group-hover:scale-110 transition-transform" />
+            </button>
+          )}
+          {transcript && (
+            <div className="absolute bottom-16 right-0 bg-bgDark border border-cardBorder p-3 rounded-2xl shadow-xl w-64 text-xs text-slate-300 pointer-events-none animate-fade-in-up">
+              "{transcript}"
+            </div>
+          )}
+        </div>
+
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
           <div className="max-w-7xl mx-auto">
             {currentView === 'dashboard' && <Dashboard data={data} toggleTask={toggleTask} toggleHabit={toggleHabit} switchView={setCurrentView} selectedDate={selectedDate} convertPotential={convertPotential} dismissPotential={dismissPotential} />}

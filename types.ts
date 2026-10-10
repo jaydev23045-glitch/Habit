@@ -116,6 +116,7 @@ export interface UserProfile {
     frequency: 'monthly';
   };
   cloudConfig: CloudConfig;
+  geminiKey?: string;
 }
 
 export interface MicroSegment {

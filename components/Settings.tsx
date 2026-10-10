@@ -14,10 +14,12 @@ interface SettingsProps {
 
 export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData, data, onImport }) => {
   const [name, setName] = useState(user.name);
+  const [geminiKey, setGeminiKey] = useState(user.geminiKey || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setName(user.name);
+    setGeminiKey(user.geminiKey || '');
   }, [user]);
 
   const handleVoiceToggle = async () => {
@@ -32,7 +34,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
   };
 
   const handleSave = () => {
-    updateUser({ name });
+    updateUser({ name, geminiKey });
     audioService.playSuccess();
   };
 
@@ -113,6 +115,18 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
               >
                 <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${user.voiceEnabled ? 'left-7' : 'left-1'}`} />
               </button>
+            </div>
+
+            <div className="space-y-2 mt-4 pt-4 border-t border-white/5">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Gemini AI API Key</label>
+              <input 
+                type="password" 
+                value={geminiKey} 
+                onChange={e => setGeminiKey(e.target.value)} 
+                placeholder="AI Voice Assistant disabled..."
+                className="w-full bg-bgDark border border-cardBorder rounded-2xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none transition-all font-semibold" 
+              />
+              <p className="text-[9px] text-slate-500 px-2">Store your Google Gemini API key here to enable voice-to-task AI features.</p>
             </div>
           </div>
         </div>
