@@ -46,3 +46,40 @@ Format:
     throw err;
   }
 };
+
+export const generateDailyDebrief = async (userData: any, apiKey: string) => {
+  const ai = new GoogleGenAI({ apiKey });
+  
+  const prompt = `
+You are an advanced, hyper-intelligent AI assistant named J.A.R.V.I.S.
+The user just booted up their system for the first time today.
+
+Here is their current data state:
+- Name: ${userData.name}
+- Level: ${Math.floor(userData.xp / 100) + 1}
+- Today's Tasks: ${userData.tasks.filter((t: any) => !t.completed).length} active
+- Active Habits: ${userData.habits.length}
+- Current Date: ${new Date().toISOString().split('T')[0]}
+
+Generate a short, punchy 2-sentence morning greeting. 
+Acknowledge their level, tasks, or a random insight. Be extremely professional, concise, and futuristic.
+Do NOT use markdown. Do NOT use emojis. Just return the raw text to be spoken by a text-to-speech engine.
+`;
+
+  try {
+    const apiCall = ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 8000)
+    );
+    
+    const response = await Promise.race([apiCall, timeoutPromise]) as any;
+    return response.text || "Good morning. System is online and ready.";
+  } catch (err: any) {
+    console.error("Debrief Generation Error:", err);
+    throw err;
+  }
+};

@@ -1,16 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserProfile, Task } from '../types';
-import { GoogleGenAI } from "@google/genai";
+import { UserProfile, Task, Habit } from '../types';
+import { generateDailyDebrief } from '../services/aiService';
 import { useSpeech } from '../hooks/useSpeech';
 import { Activity, Power, Zap, Mic, Volume2, Loader2, Radio } from 'lucide-react';
 
 interface SystemBriefingProps {
   user: UserProfile;
   tasks: Task[];
+  habits: Habit[];
+  activeGeminiKey?: string;
+  onRequestAI?: () => void;
 }
 
-export const SystemBriefing: React.FC<SystemBriefingProps> = ({ user, tasks }) => {
+export const SystemBriefing: React.FC<SystemBriefingProps> = ({ user, tasks, habits, activeGeminiKey, onRequestAI }) => {
   const [status, setStatus] = useState<'idle' | 'analyzing' | 'speaking'>('idle');
   const { speak, cancel, isSpeaking } = useSpeech();
 
@@ -22,42 +25,34 @@ export const SystemBriefing: React.FC<SystemBriefingProps> = ({ user, tasks }) =
   }, [isSpeaking, status]);
 
   const generateBriefing = async () => {
+    if (!activeGeminiKey) {
+      if (onRequestAI) onRequestAI();
+      return;
+    }
+    
     setStatus('analyzing');
     
     try {
-        const today = new Date().toISOString().split('T')[0];
-        const overdueCount = tasks.filter(t => !t.completed && t.date < today).length;
-        const dueToday = tasks.filter(t => !t.completed && t.date === today).length;
-        const statsStr = Object.entries(user.stats).map(([k, v]) => `${k} Level ${Math.floor(Math.sqrt((v as number)/100))}`).join(', ');
+        const userData = {
+           name: user.name,
+           xp: user.xp,
+           tasks,
+           habits
+        };
         
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: `
-                Context: User has the following stats: [${statsStr}]. 
-                Status: ${overdueCount} overdue tasks. ${dueToday} tasks due today.
-                
-                Persona: You are CORTEX, a military-grade logistics AI for Flow OS.
-                Objective: Generate a morning briefing script for the Operator.
-                
-                Rules:
-                1. Keep it under 3 short sentences.
-                2. Be strict, precise, and motivating. No fluff.
-                3. Call the user 'Operator'.
-                4. If overdue tasks > 0, demand immediate remediation.
-                5. If stats are low, suggest training.
-                6. Output raw text only.
-            `
-        });
-        
-        const script = response.text || "Systems nominal. Ready for protocol execution.";
+        const script = await generateDailyDebrief(userData, activeGeminiKey);
         
         setStatus('speaking');
         speak(script);
         
-    } catch (e) {
+    } catch (e: any) {
         console.error("Briefing Error:", e);
         setStatus('idle');
+        if (e.message === "NETWORK_TIMEOUT" || !navigator.onLine) {
+           speak("Network connection is offline. Standby mode active.");
+        } else {
+           speak("AI Core offline. Please check your API key.");
+        }
     }
   };
 
@@ -94,6 +89,7 @@ export const SystemBriefing: React.FC<SystemBriefingProps> = ({ user, tasks }) =
        <div className="flex-1 flex items-center justify-center py-6 relative z-10">
           {status === 'idle' && (
              <button 
+               id="cortex-button"
                onClick={generateBriefing}
                className="group relative flex items-center justify-center gap-3 px-8 py-4 bg-white/5 hover:bg-primary/10 border border-white/10 hover:border-primary/50 rounded-2xl transition-all active:scale-95"
              >

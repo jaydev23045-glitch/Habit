@@ -190,9 +190,9 @@ export default function App() {
   // Vault Unlock State
   const [activeGeminiKey, setActiveGeminiKey] = useState<string>('');
   const [showVaultUnlock, setShowVaultUnlock] = useState(false);
+  const [vaultUnlockIntent, setVaultUnlockIntent] = useState<'mic' | 'cortex' | null>(null);
 
   // Activate Voice Sentinel
-
   useVoiceSentinel(data.tasks, data.user.voiceEnabled && isBooted);
 
   // AI Voice Command Integration
@@ -257,8 +257,19 @@ export default function App() {
     if (activeGeminiKey) {
       startListening();
     } else if (data.user.encryptedGeminiKey) {
+      setVaultUnlockIntent('mic');
       setShowVaultUnlock(true);
     } else {
+      alert("Please configure your Gemini API Key in Settings first.");
+      setCurrentView('settings');
+    }
+  };
+
+  const handleRequestAI = () => {
+    if (!activeGeminiKey && data.user.encryptedGeminiKey) {
+      setVaultUnlockIntent('cortex');
+      setShowVaultUnlock(true);
+    } else if (!data.user.encryptedGeminiKey) {
       alert("Please configure your Gemini API Key in Settings first.");
       setCurrentView('settings');
     }
@@ -634,11 +645,19 @@ export default function App() {
             setActiveGeminiKey(decryptedKey);
             setShowVaultUnlock(false);
             audioService.playSuccess();
-            // Start listening automatically after unlock
-            setTimeout(() => {
-              const startBtn = document.getElementById('mic-button');
-              if (startBtn) startBtn.click();
-            }, 100);
+            
+            if (vaultUnlockIntent === 'mic') {
+              setTimeout(() => {
+                const startBtn = document.getElementById('mic-button');
+                if (startBtn) startBtn.click();
+              }, 100);
+            } else if (vaultUnlockIntent === 'cortex') {
+              setTimeout(() => {
+                const cortexBtn = document.getElementById('cortex-button');
+                if (cortexBtn) cortexBtn.click();
+              }, 100);
+            }
+            setVaultUnlockIntent(null);
           }}
           onCancel={() => setShowVaultUnlock(false)}
         />
@@ -684,7 +703,7 @@ export default function App() {
 
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
           <div className="max-w-7xl mx-auto">
-            {currentView === 'dashboard' && <Dashboard data={data} toggleTask={toggleTask} toggleHabit={toggleHabit} switchView={setCurrentView} selectedDate={selectedDate} convertPotential={convertPotential} dismissPotential={dismissPotential} />}
+            {currentView === 'dashboard' && <Dashboard data={data} toggleTask={toggleTask} toggleHabit={toggleHabit} switchView={setCurrentView} selectedDate={selectedDate} convertPotential={convertPotential} dismissPotential={dismissPotential} activeGeminiKey={activeGeminiKey} onRequestAI={handleRequestAI} />}
             {currentView === 'focus' && <FocusMode onSessionComplete={(mins) => updateData(prev => ({ ...prev, user: { ...prev.user, xp: (prev.user.xp || 0) + (mins * 2) } }))} />}
             {currentView === 'tasks' && <TaskManager tasks={data.tasks || []} addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} selectedDate={selectedDate} startMomentum={startMomentum} updateTask={updateTask} />}
             {currentView === 'learning' && <Learning topics={data.topics || []} addTopic={addTopic} processRevision={processRevision} deleteTopic={deleteTopic} updateTopic={updateTopic} startMomentum={startMomentum} />}

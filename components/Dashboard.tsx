@@ -15,9 +15,11 @@ interface DashboardProps {
   selectedDate: string;
   convertPotential?: (id: string) => void; 
   dismissPotential?: (id: string) => void; 
+  activeGeminiKey?: string;
+  onRequestAI?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ data, toggleTask, toggleHabit, switchView, selectedDate, convertPotential, dismissPotential }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ data, toggleTask, toggleHabit, switchView, selectedDate, convertPotential, dismissPotential, activeGeminiKey, onRequestAI }) => {
   const today = new Date().toISOString().split('T')[0];
   const isPast = selectedDate < today;
 
@@ -87,7 +89,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, toggleTask, toggleHa
 
         {/* System Briefing / Cortex Module */}
         <div className="lg:col-span-2 bg-gradient-to-br from-teal-500/10 to-primary/10 border border-primary/20 rounded-[2rem] p-8">
-           <SystemBriefing user={data.user} tasks={activeTasks} />
+           <SystemBriefing user={data.user} tasks={activeTasks} habits={habits} activeGeminiKey={activeGeminiKey} onRequestAI={onRequestAI} />
         </div>
       </div>
 
