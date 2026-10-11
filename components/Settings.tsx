@@ -227,6 +227,54 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
               </div>
             )}
 
+            {/* Voice Recognition Language Selector */}
+            <div className="bg-black/40 border border-white/[0.06] p-4 rounded-2xl space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-slate-200">Voice Language (J.A.R.V.I.S)</div>
+                  <div className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold mt-0.5">Spoken speech recognition</div>
+                </div>
+                <span className="text-[9px] font-mono text-primary font-bold uppercase px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
+                  {user.voiceLanguage || 'en-IN'}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateUser({ voiceLanguage: 'en-IN' });
+                    localStorage.setItem('flow-os-voice-lang', 'en-IN');
+                    audioService.playAction();
+                  }}
+                  className={`py-2.5 px-1 rounded-xl text-[10px] font-bold border transition-all ${(user.voiceLanguage || 'en-IN') === 'en-IN' ? 'bg-primary/20 border-primary text-white shadow-md shadow-primary/20' : 'bg-black/30 border-white/[0.06] text-slate-400 hover:text-white'}`}
+                >
+                  English (India)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateUser({ voiceLanguage: 'hi-IN' });
+                    localStorage.setItem('flow-os-voice-lang', 'hi-IN');
+                    audioService.playAction();
+                  }}
+                  className={`py-2.5 px-1 rounded-xl text-[10px] font-bold border transition-all ${user.voiceLanguage === 'hi-IN' ? 'bg-primary/20 border-primary text-white shadow-md shadow-primary/20' : 'bg-black/30 border-white/[0.06] text-slate-400 hover:text-white'}`}
+                >
+                  Hindi (हिंदी)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateUser({ voiceLanguage: 'gu-IN' });
+                    localStorage.setItem('flow-os-voice-lang', 'gu-IN');
+                    audioService.playAction();
+                  }}
+                  className={`py-2.5 px-1 rounded-xl text-[10px] font-bold border transition-all ${user.voiceLanguage === 'gu-IN' ? 'bg-primary/20 border-primary text-white shadow-md shadow-primary/20' : 'bg-black/30 border-white/[0.06] text-slate-400 hover:text-white'}`}
+                >
+                  Gujarati (ગુજરાતી)
+                </button>
+              </div>
+            </div>
+
             {/* Mobile Auto-Launch Option */}
             <div className="flex items-center justify-between bg-black/40 border border-white/[0.06] p-4 rounded-2xl">
               <div>

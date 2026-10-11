@@ -143,6 +143,7 @@ export interface UserProfile {
   rawGeminiKey?: string; // Direct unencrypted key for personal devices (never prompts for password)
   rememberVault?: boolean; // Remember unlocked key in device storage
   autoBootEnabled?: boolean; // Auto-skip boot screen on startup for mobile convenience
+  voiceLanguage?: 'en-US' | 'en-IN' | 'hi-IN' | 'gu-IN'; // Speech recognition language
 }
 
 export interface MicroSegment {

@@ -22,7 +22,7 @@ import { VaultUnlock } from './components/VaultUnlock';
 import { Task, Habit, LearningTopic, ViewName, AppData, UserProfile, HorizonPotential, MomentumSession, TopicStatus, HistoricalReport, ReportRange, DayReflection, WorkSession, MultiVoiceResult } from './types';
 
 import { voiceService } from './services/voiceService';
-import { CloudOff, Loader2, Lock, RefreshCw, ShieldCheck, AlertTriangle, Mic, Sparkles } from 'lucide-react';
+import { CloudOff, Loader2, Lock, RefreshCw, ShieldCheck, AlertTriangle, Mic, Sparkles, Globe } from 'lucide-react';
 import { useVoiceToTask } from './hooks/useVoiceToTask';
 import { v4 as uuidv4 } from 'uuid';
 import { audioService } from './services/audioService';
@@ -340,8 +340,34 @@ export default function App() {
     }
   };
 
+  const [selectedVoiceLang, setSelectedVoiceLang] = useState<string>(() => {
+    return data.user.voiceLanguage || (typeof localStorage !== 'undefined' ? localStorage.getItem('flow-os-voice-lang') : '') || 'en-IN';
+  });
+
+  const handleSetVoiceLang = (lang: string) => {
+    setSelectedVoiceLang(lang);
+    if (typeof localStorage !== 'undefined') localStorage.setItem('flow-os-voice-lang', lang);
+    updateData(prev => ({
+      ...prev,
+      user: {
+        ...prev.user,
+        voiceLanguage: lang as any
+      }
+    }));
+  };
+
+  useEffect(() => {
+    if (activeGeminiKey) {
+      voiceService.setApiKey(activeGeminiKey);
+    }
+  }, [activeGeminiKey]);
+
   const habitTitles = useMemo(() => (data.habits || []).map(h => h.title), [data.habits]);
-  const voiceContext = useMemo(() => ({ habitTitles, todayDate: getFlowDate() }), [habitTitles]);
+  const voiceContext = useMemo(() => ({ 
+    habitTitles, 
+    todayDate: getFlowDate(),
+    language: selectedVoiceLang 
+  }), [habitTitles, selectedVoiceLang]);
 
   const { isListening, transcript, isProcessing, startListening, stopListening } = useVoiceToTask(
     activeGeminiKey, 
@@ -836,52 +862,92 @@ export default function App() {
         <Header title={currentView.toUpperCase()} user={data.user} setView={setCurrentView} selectedDate={selectedDate} setSelectedDate={setSelectedDate} data={data} />
         
         {/* AI Voice Assistant Dynamic HUD */}
-        <div className="fixed bottom-24 lg:bottom-10 right-5 lg:right-10 z-[100] flex flex-col items-end gap-3 pointer-events-auto">
+        <div className="fixed bottom-24 lg:bottom-10 right-4 lg:right-10 z-[100] flex flex-col items-end gap-2.5 pointer-events-auto">
+          {/* Multilingual Switcher Pill */}
+          <div className="flex items-center gap-1 bg-[#0b0e14]/95 backdrop-blur-2xl border border-white/[0.1] px-2.5 py-1 rounded-full text-[10px] font-mono font-bold shadow-xl">
+            <Globe size={11} className="text-primary mr-0.5" />
+            <button 
+              onClick={() => handleSetVoiceLang('en-IN')} 
+              className={`px-2 py-0.5 rounded-full transition-all ${selectedVoiceLang === 'en-IN' || selectedVoiceLang === 'en-US' ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'text-slate-400 hover:text-white'}`}
+              title="English (Indian / International)"
+            >
+              EN
+            </button>
+            <button 
+              onClick={() => handleSetVoiceLang('hi-IN')} 
+              className={`px-2 py-0.5 rounded-full transition-all ${selectedVoiceLang === 'hi-IN' ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'text-slate-400 hover:text-white'}`}
+              title="Hindi (हिंदी / Hinglish)"
+            >
+              हिन्दी
+            </button>
+            <button 
+              onClick={() => handleSetVoiceLang('gu-IN')} 
+              className={`px-2 py-0.5 rounded-full transition-all ${selectedVoiceLang === 'gu-IN' ? 'bg-primary text-white shadow-sm shadow-primary/30' : 'text-slate-400 hover:text-white'}`}
+              title="Gujarati (ગુજરાતી / Gujlish)"
+            >
+              ગુજરાતી
+            </button>
+          </div>
+
           {transcript && (
-            <div className="bg-[#0e121b]/95 backdrop-blur-2xl border border-white/[0.1] p-3.5 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.6)] w-72 text-xs text-slate-200 animate-fade-in relative overflow-hidden">
-              <div className="flex items-center gap-2 mb-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-accentCyan">
-                <span className="w-1.5 h-1.5 rounded-full bg-accentCyan animate-pulse"></span>
-                <span>Neural Voice Buffer</span>
+            <div className="bg-[#0e121b]/95 backdrop-blur-2xl border border-white/[0.12] p-3.5 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.7)] w-72 sm:w-80 text-xs text-slate-200 animate-fade-in relative overflow-hidden">
+              <div className="flex items-center justify-between mb-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-accentCyan">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accentCyan animate-pulse"></span>
+                  <span>Neural Voice Buffer</span>
+                </div>
+                <span className="text-slate-500 uppercase">{selectedVoiceLang}</span>
               </div>
-              <p className="font-semibold italic text-slate-100">"{transcript}"</p>
+              <p className="font-semibold italic text-slate-100 max-h-24 overflow-y-auto">"{transcript}"</p>
             </div>
           )}
 
-          <div className="relative flex items-center justify-center">
-            {isProcessing ? (
-              <div className="relative flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-primary/30 blur-lg animate-pulse" />
-                <div className="w-14 h-14 bg-gradient-to-tr from-primary to-accentCyan text-white rounded-full shadow-[0_0_35px_rgba(139,92,246,0.6)] flex items-center justify-center border border-white/20">
-                  <Sparkles size={24} className="animate-spin" />
-                </div>
-              </div>
-            ) : isListening ? (
-              <div className="relative flex items-center justify-center">
-                {/* Radar Waves */}
-                <span className="absolute w-20 h-20 rounded-full bg-rose-500/20 animate-ping" />
-                <span className="absolute w-28 h-28 rounded-full bg-rose-500/10 animate-pulse" />
-                
-                <button 
-                  onClick={stopListening}
-                  className="relative w-14 h-14 bg-gradient-to-tr from-rose-600 to-rose-500 text-white rounded-full shadow-[0_0_35px_rgba(244,63,94,0.6)] flex items-center justify-center border border-white/20 transition-transform active:scale-90 hover:scale-105"
-                  title="Stop recording and process"
-                >
-                  <Mic size={24} className="animate-pulse" />
-                </button>
-              </div>
-            ) : (
-              <button 
-                id="mic-button"
-                onClick={handleMicClick}
-                className="group relative flex items-center gap-2.5 px-4 py-3 bg-[#0e121b]/90 backdrop-blur-xl border border-white/[0.1] hover:border-primary/50 text-slate-200 hover:text-white rounded-full shadow-[0_10px_35px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95 hover:shadow-[0_0_30px_rgba(139,92,246,0.3)]"
-                title="Trigger Voice AI Protocol"
+          <div className="flex items-center gap-2">
+            {isListening && (
+              <button
+                onClick={stopListening}
+                className="px-4 py-3 bg-gradient-to-r from-rose-600 to-rose-500 text-white rounded-full font-black text-xs uppercase tracking-wider shadow-[0_0_30px_rgba(244,63,94,0.5)] transition-all active:scale-95 animate-fade-in flex items-center gap-2"
+                title="Finish speaking and process commands"
               >
-                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
-                  <Mic size={16} />
-                </div>
-                <span className="text-xs font-black uppercase tracking-widest hidden sm:inline-block pr-1">Voice AI</span>
+                <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                <span>Done Speaking ↵</span>
               </button>
             )}
+
+            <div className="relative flex items-center justify-center">
+              {isProcessing ? (
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-primary/30 blur-lg animate-pulse" />
+                  <div className="w-14 h-14 bg-gradient-to-tr from-primary to-accentCyan text-white rounded-full shadow-[0_0_35px_rgba(139,92,246,0.6)] flex items-center justify-center border border-white/20">
+                    <Sparkles size={24} className="animate-spin" />
+                  </div>
+                </div>
+              ) : isListening ? (
+                <div className="relative flex items-center justify-center">
+                  <span className="absolute w-20 h-20 rounded-full bg-rose-500/20 animate-ping" />
+                  <span className="absolute w-28 h-28 rounded-full bg-rose-500/10 animate-pulse" />
+                  <button 
+                    onClick={stopListening}
+                    className="relative w-14 h-14 bg-gradient-to-tr from-rose-600 to-rose-500 text-white rounded-full shadow-[0_0_35px_rgba(244,63,94,0.6)] flex items-center justify-center border border-white/20 transition-transform active:scale-90 hover:scale-105"
+                    title="Stop and process"
+                  >
+                    <Mic size={24} className="animate-pulse" />
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  id="mic-button"
+                  onClick={handleMicClick}
+                  className="group relative flex items-center gap-2.5 px-4 py-3 bg-[#0e121b]/90 backdrop-blur-xl border border-white/[0.1] hover:border-primary/50 text-slate-200 hover:text-white rounded-full shadow-[0_10px_35px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95 hover:shadow-[0_0_30px_rgba(139,92,246,0.3)]"
+                  title="Trigger Voice AI Protocol"
+                >
+                  <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                    <Mic size={16} />
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-widest hidden sm:inline-block pr-1">Voice AI</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
