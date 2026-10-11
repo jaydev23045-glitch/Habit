@@ -62,6 +62,12 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewName>('dashboard');
   const [selectedDate, setSelectedDate] = useState(getFlowDate());
   const hasNarratedToday = useRef(false);
+  const mainScrollRef = useRef<HTMLDivElement>(null);
+
+  // Automatically reset scroll position when switching views
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentView]);
   
   const [activeMomentum, setActiveMomentum] = useState<MomentumSession | null>(null);
   const [momentumTargetId, setMomentumTargetId] = useState<string | null>(null);
@@ -860,7 +866,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
+        <div ref={mainScrollRef} className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
           <div className="max-w-7xl mx-auto">
             {currentView === 'dashboard' && <Dashboard data={data} toggleTask={toggleTask} toggleHabit={toggleHabit} switchView={setCurrentView} selectedDate={selectedDate} convertPotential={convertPotential} dismissPotential={dismissPotential} activeGeminiKey={activeGeminiKey} onRequestAI={handleRequestAI} />}
             {currentView === 'focus' && <FocusMode onSessionComplete={(mins) => updateData(prev => ({ ...prev, user: { ...prev.user, xp: (prev.user.xp || 0) + (mins * 2) } }))} />}
