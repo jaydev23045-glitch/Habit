@@ -58,7 +58,9 @@ const INITIAL_DATA: AppData = {
 };
 
 export default function App() {
-  const [isBooted, setIsBooted] = useState(false);
+  const [isBooted, setIsBooted] = useState(() => {
+    return localStorage.getItem('flow-os-booted') === 'true' || localStorage.getItem('flow-os-auto-boot') === 'true';
+  });
   const [currentView, setCurrentView] = useState<ViewName>('dashboard');
   const [selectedDate, setSelectedDate] = useState(getFlowDate());
   const hasNarratedToday = useRef(false);
@@ -193,10 +195,23 @@ export default function App() {
     prevLevelRef.current = level;
   }, [level, isBooted]);
 
-  // Vault Unlock State
-  const [activeGeminiKey, setActiveGeminiKey] = useState<string>('');
+  // Vault Unlock State - auto-loads direct key or remembered key
+  const [activeGeminiKey, setActiveGeminiKey] = useState<string>(() => {
+    return localStorage.getItem('flow-os-unlocked-key') || '';
+  });
   const [showVaultUnlock, setShowVaultUnlock] = useState(false);
   const [vaultUnlockIntent, setVaultUnlockIntent] = useState<'mic' | 'cortex' | null>(null);
+
+  // Sync active key whenever user updates their direct key in settings
+  useEffect(() => {
+    if (data.user.rawGeminiKey) {
+      setActiveGeminiKey(data.user.rawGeminiKey);
+      localStorage.setItem('flow-os-unlocked-key', data.user.rawGeminiKey);
+    } else if (!activeGeminiKey) {
+      const saved = localStorage.getItem('flow-os-unlocked-key');
+      if (saved) setActiveGeminiKey(saved);
+    }
+  }, [data.user.rawGeminiKey]);
 
   // Activate Voice Sentinel
   useVoiceSentinel(data.tasks, data.user.voiceEnabled && isBooted);
@@ -336,7 +351,9 @@ export default function App() {
   );
 
   const handleMicClick = () => {
-    if (activeGeminiKey) {
+    const effectiveKey = activeGeminiKey || data.user.rawGeminiKey || localStorage.getItem('flow-os-unlocked-key');
+    if (effectiveKey) {
+      if (!activeGeminiKey) setActiveGeminiKey(effectiveKey);
       startListening();
     } else if (data.user.encryptedGeminiKey) {
       setVaultUnlockIntent('mic');
@@ -348,10 +365,13 @@ export default function App() {
   };
 
   const handleRequestAI = () => {
-    if (!activeGeminiKey && data.user.encryptedGeminiKey) {
+    const effectiveKey = activeGeminiKey || data.user.rawGeminiKey || localStorage.getItem('flow-os-unlocked-key');
+    if (!effectiveKey && data.user.encryptedGeminiKey) {
       setVaultUnlockIntent('cortex');
       setShowVaultUnlock(true);
-    } else if (!data.user.encryptedGeminiKey) {
+    } else if (effectiveKey && !activeGeminiKey) {
+      setActiveGeminiKey(effectiveKey);
+    } else if (!data.user.encryptedGeminiKey && !data.user.rawGeminiKey) {
       alert("Please configure your Gemini API Key in Settings first.");
       setCurrentView('settings');
     }

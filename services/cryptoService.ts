@@ -63,19 +63,21 @@ export const cryptoService = {
   },
 
   async encrypt(text: string, password: string): Promise<string> {
-    if (!text || !password) return "";
+    const cleanText = text?.trim();
+    const cleanPass = password?.trim();
+    if (!cleanText || !cleanPass) return "";
     
     const enc = new TextEncoder();
     const salt = window.crypto.getRandomValues(new Uint8Array(16));
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     
-    const passwordKey = await this.getKeyMaterial(password);
+    const passwordKey = await this.getKeyMaterial(cleanPass);
     const aesKey = await this.deriveKey(passwordKey, salt);
     
     const encryptedContent = await window.crypto.subtle.encrypt(
       { name: "AES-GCM", iv: iv },
       aesKey,
-      enc.encode(text)
+      enc.encode(cleanText)
     );
     
     // Format: base64(salt) + ":" + base64(iv) + ":" + base64(ciphertext)
@@ -87,17 +89,19 @@ export const cryptoService = {
   },
 
   async decrypt(encryptedPayload: string, password: string): Promise<string> {
-    if (!encryptedPayload || !password) return "";
+    const cleanPayload = encryptedPayload?.trim();
+    const cleanPass = password?.trim();
+    if (!cleanPayload || !cleanPass) return "";
     
     try {
-      const parts = encryptedPayload.split(':');
+      const parts = cleanPayload.split(':');
       if (parts.length !== 3) throw new Error("Invalid encrypted payload format");
       
       const salt = new Uint8Array(this.base642ab(parts[0]));
       const iv = new Uint8Array(this.base642ab(parts[1]));
       const ciphertext = this.base642ab(parts[2]);
       
-      const passwordKey = await this.getKeyMaterial(password);
+      const passwordKey = await this.getKeyMaterial(cleanPass);
       const aesKey = await this.deriveKey(passwordKey, salt);
       
       const decryptedContent = await window.crypto.subtle.decrypt(
@@ -107,7 +111,7 @@ export const cryptoService = {
       );
       
       const dec = new TextDecoder();
-      return dec.decode(decryptedContent);
+      return dec.decode(decryptedContent).trim();
     } catch (e) {
       console.error("Decryption failed:", e);
       throw new Error("Incorrect Vault Password or corrupted data.");

@@ -95,47 +95,50 @@ export const MobileNav: React.FC<MobileNavProps> = ({ currentView, setView }) =>
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className="fixed inset-0 z-40 bg-bgDarker/95 backdrop-blur-2xl animate-fade-in flex flex-col p-6 pb-24 overflow-y-auto"
+          className="fixed inset-0 z-[150] bg-[#06080c]/95 backdrop-blur-3xl animate-fade-in flex flex-col p-5 sm:p-6 pt-[max(env(safe-area-inset-top),1.5rem)] pb-[calc(5.5rem+env(safe-area-inset-bottom))] overflow-y-auto select-none"
         >
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
-               <div className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center">
+               <div className="w-10 h-10 bg-primary/20 text-primary rounded-2xl flex items-center justify-center border border-primary/30 shadow-[0_0_15px_rgba(139,92,246,0.3)]">
                  <Zap size={20} fill="currentColor" />
                </div>
-               <span className="text-xl font-black text-white italic tracking-tight">System Menu</span>
+               <div>
+                 <span className="text-xl font-black text-white italic tracking-tight block">Flow OS</span>
+                 <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block">System Menu</span>
+               </div>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
-              className="p-3 bg-white/5 rounded-full text-slate-400 hover:text-white"
+              className="p-3 bg-white/[0.05] hover:bg-white/[0.1] rounded-2xl text-slate-400 hover:text-white transition-colors"
             >
-              <X size={24} />
+              <X size={22} />
             </button>
           </div>
 
           <div className="space-y-6">
             <div>
-              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 pl-1">Core Modules</h4>
-              <div className="grid grid-cols-2 gap-3">
+              <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-3 pl-1">Daily Operations</h4>
+              <div className="grid grid-cols-2 gap-2.5">
                 <MenuItem view="dashboard" label="Dashboard" icon={LayoutDashboard} active={currentView === 'dashboard'} onClick={() => handleNav('dashboard')} />
                 <MenuItem view="tasks" label="Task Ledger" icon={CheckSquare} active={currentView === 'tasks'} onClick={() => handleNav('tasks')} />
                 <MenuItem view="focus" label="Focus Mode" icon={Brain} active={currentView === 'focus'} onClick={() => handleNav('focus')} />
                 <MenuItem view="habits" label="Habits" icon={Sprout} active={currentView === 'habits'} onClick={() => handleNav('habits')} />
                 <MenuItem view="work" label="Work Tracker" icon={Timer} active={currentView === 'work'} onClick={() => handleNav('work')} />
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 pl-1">Knowledge & Growth</h4>
-              <div className="grid grid-cols-2 gap-3">
-                <MenuItem view="learning" label="Learning" icon={GraduationCap} active={currentView === 'learning'} onClick={() => handleNav('learning')} />
                 <MenuItem view="forecast" label="Forecast" icon={Calendar} active={currentView === 'forecast'} onClick={() => handleNav('forecast')} />
               </div>
             </div>
 
             <div>
-              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 pl-1">Analysis & Config</h4>
-              <div className="grid grid-cols-3 gap-3">
-                <MenuItem view="review" label="Review" icon={Sunset} active={currentView === 'review'} onClick={() => handleNav('review')} />
+              <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-3 pl-1">Knowledge & Reviews</h4>
+              <div className="grid grid-cols-2 gap-2.5">
+                <MenuItem view="learning" label="Learning SRS" icon={GraduationCap} active={currentView === 'learning'} onClick={() => handleNav('learning')} />
+                <MenuItem view="review" label="Day Review" icon={Sunset} active={currentView === 'review'} onClick={() => handleNav('review')} />
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-3 pl-1">Analytics & Config</h4>
+              <div className="grid grid-cols-2 gap-2.5">
                 <MenuItem view="reports" label="Reports" icon={BarChart3} active={currentView === 'reports'} onClick={() => handleNav('reports')} />
                 <MenuItem view="settings" label="Settings" icon={Settings} active={currentView === 'settings'} onClick={() => handleNav('settings')} />
               </div>

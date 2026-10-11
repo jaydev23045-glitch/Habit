@@ -140,6 +140,9 @@ export interface UserProfile {
   };
   cloudConfig: CloudConfig;
   encryptedGeminiKey?: string;
+  rawGeminiKey?: string; // Direct unencrypted key for personal devices (never prompts for password)
+  rememberVault?: boolean; // Remember unlocked key in device storage
+  autoBootEnabled?: boolean; // Auto-skip boot screen on startup for mobile convenience
 }
 
 export interface MicroSegment {
