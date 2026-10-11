@@ -672,33 +672,54 @@ export default function App() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden ml-0 lg:ml-72 pb-20 lg:pb-0">
         <Header title={currentView.toUpperCase()} user={data.user} setView={setCurrentView} selectedDate={selectedDate} setSelectedDate={setSelectedDate} data={data} />
         
-        {/* AI Voice Assistant FAB */}
-        <div className="fixed bottom-24 lg:bottom-10 right-6 lg:right-10 z-[100]">
-          {isProcessing ? (
-            <div className="bg-primary text-white p-4 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.6)] animate-pulse flex items-center justify-center">
-              <Sparkles size={24} className="animate-spin" />
-            </div>
-          ) : isListening ? (
-            <button 
-              onClick={stopListening}
-              className="bg-red-500 text-white p-4 rounded-full shadow-[0_0_30px_rgba(239,68,68,0.6)] animate-bounce flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
-            >
-              <Mic size={24} className="animate-pulse" />
-            </button>
-          ) : (
-            <button 
-              id="mic-button"
-              onClick={handleMicClick}
-              className="bg-bgDark/80 backdrop-blur border border-primary/50 text-primary hover:text-white hover:bg-primary p-4 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 group"
-            >
-              <Mic size={24} className="group-hover:scale-110 transition-transform" />
-            </button>
-          )}
+        {/* AI Voice Assistant Dynamic HUD */}
+        <div className="fixed bottom-24 lg:bottom-10 right-5 lg:right-10 z-[100] flex flex-col items-end gap-3 pointer-events-auto">
           {transcript && (
-            <div className="absolute bottom-16 right-0 bg-bgDark border border-cardBorder p-3 rounded-2xl shadow-xl w-64 text-xs text-slate-300 pointer-events-none animate-fade-in-up">
-              "{transcript}"
+            <div className="bg-[#0e121b]/95 backdrop-blur-2xl border border-white/[0.1] p-3.5 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.6)] w-72 text-xs text-slate-200 animate-fade-in relative overflow-hidden">
+              <div className="flex items-center gap-2 mb-1.5 text-[9px] font-mono font-bold uppercase tracking-wider text-accentCyan">
+                <span className="w-1.5 h-1.5 rounded-full bg-accentCyan animate-pulse"></span>
+                <span>Neural Voice Buffer</span>
+              </div>
+              <p className="font-semibold italic text-slate-100">"{transcript}"</p>
             </div>
           )}
+
+          <div className="relative flex items-center justify-center">
+            {isProcessing ? (
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-primary/30 blur-lg animate-pulse" />
+                <div className="w-14 h-14 bg-gradient-to-tr from-primary to-accentCyan text-white rounded-full shadow-[0_0_35px_rgba(139,92,246,0.6)] flex items-center justify-center border border-white/20">
+                  <Sparkles size={24} className="animate-spin" />
+                </div>
+              </div>
+            ) : isListening ? (
+              <div className="relative flex items-center justify-center">
+                {/* Radar Waves */}
+                <span className="absolute w-20 h-20 rounded-full bg-rose-500/20 animate-ping" />
+                <span className="absolute w-28 h-28 rounded-full bg-rose-500/10 animate-pulse" />
+                
+                <button 
+                  onClick={stopListening}
+                  className="relative w-14 h-14 bg-gradient-to-tr from-rose-600 to-rose-500 text-white rounded-full shadow-[0_0_35px_rgba(244,63,94,0.6)] flex items-center justify-center border border-white/20 transition-transform active:scale-90 hover:scale-105"
+                  title="Stop recording and process"
+                >
+                  <Mic size={24} className="animate-pulse" />
+                </button>
+              </div>
+            ) : (
+              <button 
+                id="mic-button"
+                onClick={handleMicClick}
+                className="group relative flex items-center gap-2.5 px-4 py-3 bg-[#0e121b]/90 backdrop-blur-xl border border-white/[0.1] hover:border-primary/50 text-slate-200 hover:text-white rounded-full shadow-[0_10px_35px_rgba(0,0,0,0.5)] transition-all hover:scale-105 active:scale-95 hover:shadow-[0_0_30px_rgba(139,92,246,0.3)]"
+                title="Trigger Voice AI Protocol"
+              >
+                <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                  <Mic size={16} />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest hidden sm:inline-block pr-1">Voice AI</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">

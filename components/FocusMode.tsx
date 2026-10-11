@@ -232,25 +232,29 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onSessionComplete }) => {
     <div className="flex flex-col items-center justify-center min-h-[500px] animate-fade-in gap-8">
       
       {/* Top Presets */}
-      <div className="bg-cardBg p-1 rounded-xl border border-cardBorder flex flex-wrap justify-center gap-2 shadow-lg">
+      <div className="bg-[#10141e]/95 p-1.5 rounded-2xl border border-white/[0.08] flex flex-wrap justify-center gap-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-xl">
         {(['pomodoro', 'short', 'long'] as const).map((m) => (
            <button
              key={m}
              onClick={() => setPreset(m)}
-             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-               mode === m ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-white'
+             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+               mode === m 
+                 ? 'bg-primary/20 border border-primary/40 text-white shadow-[0_0_15px_rgba(139,92,246,0.25)]' 
+                 : 'text-slate-400 hover:text-white border border-transparent hover:bg-white/[0.03]'
              }`}
            >
-             {m === 'pomodoro' ? 'Pomodoro' : m === 'short' ? 'Short' : 'Long Break'}
+             {m === 'pomodoro' ? 'Pomodoro (25m)' : m === 'short' ? 'Short Break (5m)' : 'Long Break (15m)'}
            </button>
         ))}
         <button
           onClick={() => setIsSettingCustom(true)}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
-            mode === 'custom' ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:text-white'
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            mode === 'custom' 
+              ? 'bg-primary/20 border border-primary/40 text-white shadow-[0_0_15px_rgba(139,92,246,0.25)]' 
+              : 'text-slate-400 hover:text-white border border-transparent hover:bg-white/[0.03]'
           }`}
         >
-          <Clock size={14} /> Custom
+          <Clock size={13} /> Custom
         </button>
       </div>
 
@@ -300,15 +304,15 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onSessionComplete }) => {
         </button>
         <button 
           onClick={resetTimer}
-          className="w-16 h-16 rounded-full bg-cardBg border border-cardBorder text-slate-400 hover:border-primary hover:text-primary flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95 shadow-lg"
+          className="w-16 h-16 rounded-full bg-[#10141e] border border-white/[0.1] text-slate-400 hover:border-primary hover:text-white flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95 shadow-lg"
         >
-          <RotateCcw size={24} />
+          <RotateCcw size={22} />
         </button>
       </div>
 
       {/* Audio Environment Controls */}
-      <div className="w-full max-w-sm bg-cardBg/50 border border-white/5 rounded-2xl p-4 mt-4 backdrop-blur-sm">
-         <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 text-center">Audio Environment</div>
+      <div className="w-full max-w-sm bg-[#10141e]/90 border border-white/[0.08] rounded-2xl p-4.5 mt-4 backdrop-blur-2xl shadow-xl">
+         <div className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-3 text-center">Neural Audio Generator</div>
          <div className="grid grid-cols-4 gap-2">
             <button 
                onClick={() => setSoundType(soundType === 'brown' ? 'none' : 'brown')}

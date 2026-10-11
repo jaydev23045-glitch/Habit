@@ -67,17 +67,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, toggleTask, toggleHa
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* CHARACTER STATS (RADAR) */}
-        <div className="lg:col-span-1 bg-cardBg border border-cardBorder rounded-[2rem] p-6 relative overflow-hidden flex flex-col items-center justify-center shadow-2xl">
-           <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-primary to-emerald-500 opacity-50"></div>
+        <div className="lg:col-span-1 bg-[#10141e]/95 backdrop-blur-xl border border-white/[0.08] rounded-[2rem] p-6 relative overflow-hidden flex flex-col items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] group hover:border-white/[0.15] transition-colors">
+           <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-primary via-accentCyan to-accentEmerald opacity-60"></div>
            <div className="w-full flex justify-between items-center mb-4 px-2">
               <div>
-                 <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Operator Level</div>
+                 <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Operator Rank</div>
                  <div className="text-3xl font-black text-white italic tracking-tighter">Lvl {level}</div>
               </div>
               <div className="text-right">
-                 <div className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">{Math.round(progressPercent)}% to Next</div>
-                 <div className="w-20 h-1.5 bg-slate-800 rounded-full mt-1 overflow-hidden">
-                    <div className="h-full bg-emerald-500" style={{ width: `${progressPercent}%` }}></div>
+                 <div className="text-[10px] font-mono font-bold text-accentEmerald uppercase tracking-wider">{Math.round(progressPercent)}% to Next</div>
+                 <div className="w-20 h-1.5 bg-slate-800/80 rounded-full mt-1 overflow-hidden border border-white/[0.05]">
+                    <div className="h-full bg-gradient-to-r from-emerald-500 to-accentCyan shadow-[0_0_8px_rgba(16,185,129,0.8)]" style={{ width: `${progressPercent}%` }}></div>
                  </div>
               </div>
            </div>
@@ -88,7 +88,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, toggleTask, toggleHa
         </div>
 
         {/* System Briefing / Cortex Module */}
-        <div className="lg:col-span-2 bg-gradient-to-br from-teal-500/10 to-primary/10 border border-primary/20 rounded-[2rem] p-8">
+        <div className="lg:col-span-2 bg-gradient-to-br from-primary/[0.08] via-[#10141e]/95 to-accentCyan/[0.04] border border-white/[0.1] rounded-[2rem] p-7 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden">
            <SystemBriefing user={data.user} tasks={activeTasks} habits={habits} activeGeminiKey={activeGeminiKey} onRequestAI={onRequestAI} />
         </div>
       </div>

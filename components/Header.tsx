@@ -24,9 +24,9 @@ const LiveClock: React.FC = () => {
   }, []);
 
   return (
-    <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
-       <Clock size={12} className="text-slate-500" />
-       <span className="text-xs font-mono text-slate-400">
+    <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-white/[0.03] rounded-full border border-white/[0.06] text-xs font-mono">
+       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+       <span className="text-slate-300 font-medium tracking-wider">
          {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
        </span>
     </div>
@@ -91,25 +91,27 @@ export const Header: React.FC<HeaderProps> = ({ title, user, setView, selectedDa
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-bgDark/80 backdrop-blur-md border-b border-cardBorder px-4 md:px-8 py-4 flex justify-between items-center">
-      <div className="flex items-center gap-4">
-        <h1 className="text-lg md:text-2xl font-bold text-white uppercase tracking-tight italic">{title}</h1>
+    <header className="sticky top-0 z-40 bg-[#080b11]/85 backdrop-blur-2xl border-b border-white/[0.06] px-4 md:px-8 py-3.5 flex justify-between items-center shadow-lg">
+      <div className="flex items-center gap-3 md:gap-4">
+        <h1 className="text-base md:text-xl font-black text-white uppercase tracking-tight italic flex items-center gap-2">
+          <span>{title}</span>
+        </h1>
         <LiveClock />
       </div>
 
-      <div className="flex items-center gap-3 md:gap-6">
+      <div className="flex items-center gap-2.5 md:gap-5">
         <div className="text-right hidden sm:block relative">
           <div className="relative group">
-             <div className={`flex items-center gap-2 text-sm font-bold px-3 py-1.5 rounded-lg border transition-all ${selectedDate !== today ? 'bg-primary/20 border-primary text-primary shadow-[0_0_15px_rgba(124,58,237,0.2)]' : 'border-cardBorder text-slate-400 group-hover:text-white group-hover:bg-white/5'}`}>
-               <Calendar size={14} />
-               <span>{formatDateDisplay(selectedDate)}</span>
+             <div className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-xl border transition-all ${selectedDate !== today ? 'bg-primary/20 border-primary/40 text-primary shadow-[0_0_15px_rgba(139,92,246,0.25)]' : 'border-white/[0.08] text-slate-300 group-hover:text-white group-hover:bg-white/[0.04]'}`}>
+               <Calendar size={13} className="text-primary" />
+               <span className="tracking-tight">{formatDateDisplay(selectedDate)}</span>
                {selectedDate !== today && (
                  <button 
                   onClick={resetToToday}
-                  className="ml-1 p-1 hover:bg-white/10 rounded-md transition-colors text-primary relative z-50 pointer-events-auto"
+                  className="ml-1 p-0.5 hover:bg-white/10 rounded transition-colors text-primary relative z-50 pointer-events-auto"
                   title="Return to Today"
                  >
-                   <RotateCcw size={12} />
+                   <RotateCcw size={11} />
                  </button>
                )}
              </div>
@@ -124,13 +126,13 @@ export const Header: React.FC<HeaderProps> = ({ title, user, setView, selectedDa
              />
           </div>
           {selectedDate !== today && (
-             <div className="text-[9px] text-primary font-black mt-0.5 tracking-[0.3em] uppercase animate-pulse">Temporal Offset</div>
+             <div className="text-[8px] text-primary font-mono font-bold mt-0.5 tracking-[0.2em] uppercase animate-pulse">Temporal Offset</div>
           )}
         </div>
 
-        <div className="flex items-center gap-2 md:gap-3 bg-yellow-400/10 border border-yellow-400/20 px-3 py-1.5 rounded-full text-yellow-400 text-[10px] md:text-sm font-black uppercase tracking-widest shadow-[inset_0_0_10px_rgba(250,204,21,0.1)]">
-          <Trophy size={14} />
-          <span>{user.xp} XP</span>
+        <div className="flex items-center gap-1.5 md:gap-2 bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-transparent border border-amber-400/30 px-3 py-1.5 rounded-full text-amber-300 text-[10px] md:text-xs font-black uppercase tracking-wider shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+          <Trophy size={13} className="text-amber-400" />
+          <span className="font-mono">{user.xp} XP</span>
         </div>
 
         <div className="relative">

@@ -104,14 +104,14 @@ export const TaskManager = memo<TaskManagerProps>(({ tasks, addTask, toggleTask,
         </div>
       </div>
 
-      <div className="max-w-xl mx-auto bg-cardBg border border-cardBorder rounded-[2rem] p-7 shadow-2xl space-y-5">
-         <h3 className="font-bold text-[10px] text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3"><Plus size={16} className="text-primary"/> Quick Add</h3>
+      <div className="max-w-xl mx-auto bg-[#10141e]/95 backdrop-blur-2xl border border-white/[0.08] rounded-[2rem] p-7 shadow-[0_25px_60px_rgba(0,0,0,0.6)] space-y-5">
+         <h3 className="font-bold text-[10px] text-slate-400 uppercase tracking-[0.25em] flex items-center gap-2"><Plus size={15} className="text-primary"/> Create Protocol</h3>
          <input 
             type="text" 
             value={manualTitle} 
             onChange={(e) => setManualTitle(e.target.value)} 
-            placeholder="What is the next protocol?" 
-            className="w-full bg-bgDark border border-cardBorder rounded-2xl px-5 py-4 text-sm text-white focus:border-primary outline-none transition-all placeholder:text-slate-700" 
+            placeholder="Describe action item or protocol..." 
+            className="w-full bg-black/50 border border-white/[0.08] focus:border-primary/80 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-slate-600 shadow-inner" 
             onKeyDown={(e) => e.key === 'Enter' && handleManualAdd()} 
          />
          
@@ -196,11 +196,11 @@ export const TaskManager = memo<TaskManagerProps>(({ tasks, addTask, toggleTask,
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {sortedTasks.map(task => (
-          <div key={task.id} className={`group flex items-center gap-5 bg-cardBg border border-cardBorder p-5 rounded-3xl transition-all hover:border-primary/50 shadow-lg ${task.completed ? 'opacity-30 grayscale-[0.5]' : ''}`}>
-             <button onClick={() => toggleTask(task.id)} className={`transition-all active:scale-90 ${task.completed ? 'text-emerald-500' : 'text-slate-500 hover:text-primary'}`}>
-                {task.completed ? <CheckCircle2 size={28} /> : <Circle size={28} />}
+          <div key={task.id} className={`group flex items-center gap-4.5 bg-[#10141e]/90 backdrop-blur-md border border-white/[0.06] hover:border-white/[0.15] hover:bg-[#121624] p-4 rounded-2xl transition-all shadow-md ${task.completed ? 'opacity-35 grayscale-[0.4]' : ''}`}>
+             <button onClick={() => toggleTask(task.id)} className={`transition-all active:scale-90 ${task.completed ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]' : 'text-slate-500 hover:text-primary'}`}>
+                {task.completed ? <CheckCircle2 size={24} /> : <Circle size={24} />}
              </button>
              <div className="flex-1 min-w-0">
                {editingId === task.id ? (

@@ -205,7 +205,7 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
   }
 
   return (
-    <div className={`bg-cardBg border rounded-[2rem] p-6 flex flex-col items-center text-center relative group min-h-[340px] justify-between transition-all duration-500 shadow-xl overflow-hidden ${isDoneToday ? 'border-emerald-500/30' : 'border-cardBorder hover:border-primary/50'}`}>
+    <div className={`bg-[#10141e]/90 backdrop-blur-xl border rounded-[2rem] p-6 flex flex-col items-center text-center relative group min-h-[340px] justify-between transition-all duration-300 shadow-[0_15px_40px_rgba(0,0,0,0.5)] overflow-hidden ${isDoneToday ? 'border-emerald-500/40 shadow-[0_0_25px_rgba(16,185,129,0.1)]' : 'border-white/[0.06] hover:border-white/[0.15] hover:bg-[#121624]'}`}>
       
       {floatAnim && (
         <div 

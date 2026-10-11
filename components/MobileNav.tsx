@@ -14,15 +14,15 @@ interface MobileNavProps {
 const NavIcon = ({ view, icon: Icon, active, onClick, label }: { view: ViewName, icon: any, active: boolean, onClick: () => void, label?: string }) => (
   <button
     onClick={(e) => { e.stopPropagation(); onClick(); }}
-    className={`flex flex-col items-center justify-center flex-1 py-2 transition-all active:scale-95 ${
-      active ? 'text-primary' : 'text-slate-500 hover:text-slate-300'
+    className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-all active:scale-90 ${
+      active ? 'text-white' : 'text-slate-500 hover:text-slate-300'
     }`}
   >
-    <div className={`relative p-1 rounded-xl transition-all ${active ? 'bg-primary/10' : ''}`}>
-        <Icon size={24} strokeWidth={active ? 2.5 : 2} />
-        {active && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>}
+    <div className={`relative p-1.5 rounded-xl transition-all ${active ? 'bg-primary/20 text-primary shadow-[0_0_15px_rgba(139,92,246,0.3)]' : ''}`}>
+        <Icon size={20} strokeWidth={active ? 2.5 : 1.8} className={active ? 'text-primary' : ''} />
+        {active && <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_6px_rgba(139,92,246,0.9)]"></div>}
     </div>
-    <span className={`text-[9px] font-black uppercase tracking-tighter mt-1 ${active ? 'opacity-100 text-primary' : 'opacity-60'}`}>
+    <span className={`text-[8px] font-black uppercase tracking-wider mt-0.5 transition-colors ${active ? 'text-primary font-bold' : 'text-slate-500'}`}>
       {label || (view === 'learning' ? 'Learn' : view)}
     </span>
   </button>
@@ -31,14 +31,14 @@ const NavIcon = ({ view, icon: Icon, active, onClick, label }: { view: ViewName,
 const MenuItem = ({ view, icon: Icon, label, active, onClick }: { view: ViewName, icon: any, label: string, active: boolean, onClick: () => void }) => (
   <button
     onClick={onClick}
-    className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${
+    className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all active:scale-95 ${
       active 
-        ? 'bg-primary/20 border-primary text-primary shadow-lg shadow-primary/10' 
-        : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10 hover:border-white/10 hover:text-white'
+        ? 'bg-primary/20 border-primary/40 text-white shadow-lg shadow-primary/20' 
+        : 'bg-white/[0.03] border-white/[0.06] text-slate-400 hover:bg-white/[0.06] hover:text-white'
     }`}
   >
-    <Icon size={28} className="mb-2" />
-    <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+    <Icon size={24} className={`mb-1.5 ${active ? 'text-primary' : 'text-slate-400'}`} />
+    <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
   </button>
 );
 
@@ -146,7 +146,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ currentView, setView }) =>
 
       {/* Bottom Navigation Bar */}
       <nav 
-        className="lg:hidden fixed bottom-0 left-0 w-full bg-bgDarker/90 backdrop-blur-xl border-t border-white/5 px-2 z-50 flex items-center justify-around h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+        className="lg:hidden fixed bottom-0 left-0 w-full bg-[#06080c]/90 backdrop-blur-2xl border-t border-white/[0.08] px-2 z-50 flex items-center justify-around h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]"
       >
         {/* Direct Access Slots */}
         <NavIcon view="dashboard" icon={LayoutDashboard} active={currentView === 'dashboard'} onClick={() => handleNav('dashboard')} />
@@ -156,9 +156,9 @@ export const MobileNav: React.FC<MobileNavProps> = ({ currentView, setView }) =>
         <div className="relative -top-5">
            <button 
              onClick={toggleMenu}
-             className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all active:scale-95 border border-white/10 ${isOpen ? 'bg-white text-bgDarker rotate-90' : 'bg-primary text-white shadow-primary/30'}`}
+             className={`w-13 h-13 rounded-2xl flex items-center justify-center shadow-lg transition-all active:scale-90 border border-white/20 ${isOpen ? 'bg-white text-bgDarker rotate-90 shadow-white/20' : 'bg-gradient-to-tr from-primary to-primary-hover text-white shadow-[0_0_25px_rgba(139,92,246,0.5)]'}`}
            >
-             {isOpen ? <X size={24} strokeWidth={3} /> : <Menu size={24} strokeWidth={3} />}
+             {isOpen ? <X size={22} strokeWidth={2.8} /> : <Menu size={22} strokeWidth={2.8} />}
            </button>
         </div>
 

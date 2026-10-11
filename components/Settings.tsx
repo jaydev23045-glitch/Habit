@@ -107,23 +107,23 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Profile & Voice card */}
-        <div className="bg-cardBg border border-cardBorder rounded-[2rem] p-6 sm:p-8 shadow-xl space-y-6">
-          <h3 className="text-xs font-black uppercase tracking-[0.35em] text-slate-500 border-b border-white/5 pb-3 flex items-center gap-2">
+        <div className="bg-[#10141e]/90 backdrop-blur-2xl border border-white/[0.08] rounded-[2rem] p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] space-y-6">
+          <h3 className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 border-b border-white/[0.06] pb-3 flex items-center gap-2">
             <User size={14} className="text-primary" /> Profile & Voice
           </h3>
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Explorer Identity</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Explorer Identity</label>
               <input 
                 type="text" 
                 value={name} 
                 onChange={e => setName(e.target.value)} 
-                className="w-full bg-bgDark border border-cardBorder rounded-2xl px-4 py-3.5 text-sm text-white focus:border-primary outline-none transition-all font-semibold" 
+                className="w-full bg-black/50 border border-white/[0.08] focus:border-primary/80 rounded-2xl px-4 py-3.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-semibold" 
               />
             </div>
 
-            <div className="flex items-center justify-between bg-bgDark/40 border border-white/5 p-4 rounded-2xl">
+            <div className="flex items-center justify-between bg-black/40 border border-white/[0.06] p-4 rounded-2xl">
               <div>
                 <div className="text-sm font-bold text-slate-200">Voice Synthesis</div>
                 <div className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold mt-0.5">Narrate boot sequences</div>
@@ -132,7 +132,7 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
                 onClick={handleVoiceToggle}
                 className={`w-14 h-8 rounded-full relative transition-all duration-300 ${user.voiceEnabled ? 'bg-primary' : 'bg-slate-800'}`}
               >
-                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${user.voiceEnabled ? 'left-7' : 'left-1'}`} />
+                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 shadow-md ${user.voiceEnabled ? 'left-7' : 'left-1'}`} />
               </button>
             </div>
 

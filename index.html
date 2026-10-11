@@ -27,22 +27,27 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#7c3aed',
-                        'primary-hover': '#6d28d9',
-                        bgDark: '#0f172a',
-                        bgDarker: '#020617',
-                        cardBg: '#1e293b',
-                        cardBorder: '#334155',
+                        primary: '#8b5cf6',
+                        'primary-hover': '#7c3aed',
+                        bgDark: '#0b0e14',
+                        bgDarker: '#06080c',
+                        cardBg: '#10141e',
+                        cardBorder: 'rgba(255, 255, 255, 0.08)',
+                        accentCyan: '#06b6d4',
+                        accentEmerald: '#10b981',
+                        accentAmber: '#f59e0b',
                     },
                     animation: {
-                        'fade-in': 'fadeIn 0.3s ease-in-out',
-                        'slide-in': 'slideIn 0.3s ease-out',
+                        'fade-in': 'fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                        'slide-in': 'slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                         'pulse-soft': 'pulseSoft 3s infinite',
                         'neural-pulse': 'neuralPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'radar-ripple': 'radarRipple 2s cubic-bezier(0, 0.2, 0.8, 1) infinite',
+                        'waveform': 'waveform 1.2s ease-in-out infinite',
                     },
                     keyframes: {
                         fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '0%': { opacity: '0', transform: 'translateY(6px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
                         },
                         slideIn: {
@@ -56,6 +61,14 @@
                         neuralPulse: {
                             '0%, 100%': { opacity: '1', transform: 'scale(1)' },
                             '50%': { opacity: '0.5', transform: 'scale(0.98)' },
+                        },
+                        radarRipple: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0.9' },
+                            '100%': { transform: 'scale(2.2)', opacity: '0' },
+                        },
+                        waveform: {
+                            '0%, 100%': { height: '20%' },
+                            '50%': { height: '100%' },
                         }
                     }
                 }
@@ -66,21 +79,33 @@
         * {
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
+            box-sizing: border-box;
+        }
+
+        html {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
         }
 
         ::-webkit-scrollbar {
-            width: 4px;
+            width: 5px;
+            height: 5px;
         }
         ::-webkit-scrollbar-track {
-            background: #020617; 
+            background: transparent; 
         }
         ::-webkit-scrollbar-thumb {
-            background: #334155; 
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.12); 
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.22);
         }
         
         body {
-            background-color: #020617;
+            background-color: #06080c;
+            color: #f1f5f9;
             height: 100dvh;
             width: 100vw;
             margin: 0;
