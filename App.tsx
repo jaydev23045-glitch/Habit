@@ -58,9 +58,8 @@ const INITIAL_DATA: AppData = {
 };
 
 export default function App() {
-  const [isBooted, setIsBooted] = useState(() => {
-    return localStorage.getItem('flow-os-booted') === 'true' || localStorage.getItem('flow-os-auto-boot') === 'true';
-  });
+  // Always boot directly into the interactive dashboard for zero-friction mobile UX
+  const [isBooted, setIsBooted] = useState(true);
   const [currentView, setCurrentView] = useState<ViewName>('dashboard');
   const [selectedDate, setSelectedDate] = useState(getFlowDate());
   const hasNarratedToday = useRef(false);
@@ -904,7 +903,7 @@ export default function App() {
             )}
             {currentView === 'review' && <DayReview data={data} updateTask={updateTask} selectedDate={selectedDate} onSaveReview={saveDayReview} />}
             {currentView === 'reports' && <Reports data={data} />}
-            {currentView === 'settings' && <Settings user={data.user} data={data} onImport={(newData) => setData(newData)} updateUser={(u) => updateData(prev => ({...prev, user: {...prev.user, ...u}}))} resetData={() => { localStorage.removeItem('flow-os-data'); setData(INITIAL_DATA); }} />}
+            {currentView === 'settings' && <Settings user={data.user} data={data} onImport={(newData) => setData(newData)} updateUser={(u) => updateData(prev => ({...prev, user: {...prev.user, ...u}}))} resetData={() => { localStorage.removeItem('flow-os-data'); setData(INITIAL_DATA); }} onTriggerBoot={() => setIsBooted(false)} />}
           </div>
         </div>
       </main>

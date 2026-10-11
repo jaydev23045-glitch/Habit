@@ -10,11 +10,12 @@ interface SettingsProps {
   resetData: () => void;
   data?: AppData;
   onImport?: (data: AppData) => void;
+  onTriggerBoot?: () => void;
 }
 
 import { cryptoService } from '../services/cryptoService';
 
-export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData, data, onImport }) => {
+export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData, data, onImport, onTriggerBoot }) => {
   const [name, setName] = useState(user.name);
   const [rawGeminiKey, setRawGeminiKey] = useState('');
   const [vaultPassword, setVaultPassword] = useState('');
@@ -190,6 +191,41 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateUser, resetData,
                 <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 shadow-md ${user.voiceEnabled ? 'left-7' : 'left-1'}`} />
               </button>
             </div>
+
+            {/* Test Voice Audio Button */}
+            <div className="flex items-center justify-between bg-black/40 border border-white/[0.06] p-4 rounded-2xl">
+              <div>
+                <div className="text-sm font-bold text-slate-200">Test Speech Audio</div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold mt-0.5">Hear AI voice on phone speaker</div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => {
+                  audioService.playAction();
+                  voiceService.speak("Audio output verified. J.A.R.V.I.S. neural systems operational.");
+                }}
+                className="px-3.5 py-2 rounded-xl bg-primary/20 hover:bg-primary/30 border border-primary/40 text-primary hover:text-white text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+              >
+                <span>Test Audio 🔊</span>
+              </button>
+            </div>
+
+            {/* Reboot Sequence Button */}
+            {onTriggerBoot && (
+              <div className="flex items-center justify-between bg-black/40 border border-white/[0.06] p-4 rounded-2xl">
+                <div>
+                  <div className="text-sm font-bold text-slate-200">Reboot Sequence</div>
+                  <div className="text-[9px] text-slate-500 uppercase tracking-wider font-semibold mt-0.5">Launch Arc Reactor boot screen</div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={onTriggerBoot}
+                  className="px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-slate-300 hover:text-white text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+                >
+                  <span>Reboot ⚡</span>
+                </button>
+              </div>
+            )}
 
             {/* Mobile Auto-Launch Option */}
             <div className="flex items-center justify-between bg-black/40 border border-white/[0.06] p-4 rounded-2xl">

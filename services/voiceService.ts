@@ -106,8 +106,21 @@ class VoiceService {
         this.isSpeaking = false;
       }
     } catch (error) {
-      console.error("Voice Engine Failure:", error);
+      console.warn("Gemini TTS unavailable, falling back to Native SpeechSynthesis:", error);
       this.isSpeaking = false;
+      
+      // Native Browser SpeechSynthesis fallback (100% works on all iOS & Android phones)
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 1.05;
+          utterance.pitch = 0.95;
+          window.speechSynthesis.speak(utterance);
+        } catch (synthErr) {
+          console.error("SpeechSynthesis error:", synthErr);
+        }
+      }
     }
   }
 }
