@@ -3,14 +3,13 @@ import { parseVoiceCommand } from '../services/aiService';
 import { audioService } from '../services/audioService';
 import { voiceService } from '../services/voiceService';
 
-export interface VoiceCommandResult {
-  type: 'TASK' | 'HABIT' | 'WORK_SESSION' | 'UNKNOWN';
-  title?: string;
-  time?: string;
-  duration?: number;
-}
+import { MultiVoiceResult } from '../types';
 
-export function useVoiceToTask(apiKey?: string, onResult?: (res: VoiceCommandResult) => void) {
+export function useVoiceToTask(
+  apiKey?: string, 
+  onResult?: (res: MultiVoiceResult) => void,
+  context?: { habitTitles?: string[]; todayDate?: string }
+) {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -78,9 +77,9 @@ export function useVoiceToTask(apiKey?: string, onResult?: (res: VoiceCommandRes
     
     setIsProcessing(true);
     try {
-      const result = await parseVoiceCommand(text, apiKey);
+      const result = await parseVoiceCommand(text, apiKey, context);
       if (result && onResult) {
-        onResult(result as VoiceCommandResult);
+        onResult(result);
       }
       setIsProcessing(false);
       audioService.playSuccess();

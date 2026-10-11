@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MobileNav } from './components/MobileNav';
 import { Header } from './components/Header';
@@ -19,11 +19,11 @@ import { LevelUpModal } from './components/LevelUpModal';
 import { WorkTracker } from './components/WorkTracker';
 import { SystemBoot } from './components/SystemBoot';
 import { VaultUnlock } from './components/VaultUnlock';
-import { Task, Habit, LearningTopic, ViewName, AppData, UserProfile, HorizonPotential, MomentumSession, TopicStatus, HistoricalReport, ReportRange, DayReflection, WorkSession } from './types';
+import { Task, Habit, LearningTopic, ViewName, AppData, UserProfile, HorizonPotential, MomentumSession, TopicStatus, HistoricalReport, ReportRange, DayReflection, WorkSession, MultiVoiceResult } from './types';
 
 import { voiceService } from './services/voiceService';
 import { CloudOff, Loader2, Lock, RefreshCw, ShieldCheck, AlertTriangle, Mic, Sparkles } from 'lucide-react';
-import { useVoiceToTask, VoiceCommandResult } from './hooks/useVoiceToTask';
+import { useVoiceToTask } from './hooks/useVoiceToTask';
 import { v4 as uuidv4 } from 'uuid';
 import { audioService } from './services/audioService';
 import { getReportTriggers } from './services/persistenceService';
@@ -195,63 +195,139 @@ export default function App() {
   // Activate Voice Sentinel
   useVoiceSentinel(data.tasks, data.user.voiceEnabled && isBooted);
 
-  // AI Voice Command Integration
-  const handleAICommandResult = (res: VoiceCommandResult) => {
-    if (res.type === 'TASK' && res.title) {
-      updateData(prev => ({
-        ...prev,
-        tasks: [...(prev.tasks || []), { 
-          id: uuidv4(), 
-          title: res.title!, 
-          time: res.time || '09:00', 
-          type: 'task', 
-          priority: 'medium', 
-          date: getFlowDate(), 
-          completed: false 
-        }]
-      }));
-      voiceService.speak("Task registered.");
-    } else if (res.type === 'HABIT' && res.title) {
-      updateData(prev => ({
-        ...prev,
-        habits: [...(prev.habits || []), { 
-          id: uuidv4(), 
-          title: res.title!, 
-          type: 'habit', 
-          frequency: 'daily', 
-          history: {}, 
-          streak: 0, 
-          completed: false, 
-          velocity: 0, 
-          createdAt: new Date().toISOString(),
-          attribute: 'WIL',
-          baseXp: 10
-        }]
-      }));
-      voiceService.speak("Habit initialized.");
-    } else if (res.type === 'WORK_SESSION' && res.title) {
-      updateData(prev => ({
-        ...prev,
-        workSessions: [...(prev.workSessions || []), {
+  // AI Voice Command Integration (Multi-Entity Triage)
+  const handleAICommandResult = (res: MultiVoiceResult) => {
+    const todayStr = getFlowDate();
+
+    updateData(prev => {
+      let nextTasks = [...(prev.tasks || [])];
+      let nextHabits = [...(prev.habits || [])];
+      let nextWork = [...(prev.workSessions || [])];
+      let earnedXp = 0;
+
+      // 1. Batch append tasks
+      if (res.tasksToAdd && res.tasksToAdd.length > 0) {
+        res.tasksToAdd.forEach(t => {
+          nextTasks.push({
+            id: uuidv4(),
+            title: t.title,
+            time: t.time || '09:00',
+            date: t.date || todayStr,
+            priority: t.priority || 'medium',
+            type: 'task',
+            completed: false,
+          });
+        });
+      }
+
+      // 2. Batch auto-complete habits
+      if (res.habitsToComplete && res.habitsToComplete.length > 0) {
+        nextHabits = nextHabits.map(h => {
+          const isMatch = res.habitsToComplete!.some(title => 
+            h.title.toLowerCase().includes(title.toLowerCase()) || 
+            title.toLowerCase().includes(h.title.toLowerCase())
+          );
+          if (isMatch && !h.history[todayStr]) {
+            earnedXp += (h.baseXp || 10);
+            const newHistory = { ...h.history, [todayStr]: true };
+            const { currentStreak } = calculateStreak(newHistory, prev.user.freezeInventory || 0);
+            return {
+              ...h,
+              completed: true,
+              history: newHistory,
+              streak: currentStreak,
+              velocity: calculateVelocity(newHistory)
+            };
+          }
+          return h;
+        });
+      }
+
+      // 3. Batch add new habits
+      if (res.habitsToAdd && res.habitsToAdd.length > 0) {
+        res.habitsToAdd.forEach(h => {
+          nextHabits.push({
+            id: uuidv4(),
+            title: h.title,
+            type: 'habit',
+            history: {},
+            streak: 0,
+            completed: false,
+            velocity: 0,
+            attribute: h.attribute || 'WIL',
+            baseXp: 10,
+          });
+        });
+      }
+
+      // 4. Log work session
+      if (res.workSessionToLog && res.workSessionToLog.title) {
+        const dur = res.workSessionToLog.durationMinutes || 25;
+        nextWork.push({
           id: uuidv4(),
-          date: getFlowDate(),
-          startedAt: new Date(Date.now() - (res.duration || 25) * 60000).toISOString(),
+          startedAt: new Date(Date.now() - dur * 60000).toISOString(),
           endedAt: new Date().toISOString(),
-          durationSeconds: (res.duration || 25) * 60,
-          details: res.title!
-        }],
+          durationSeconds: dur * 60,
+          details: res.workSessionToLog.title,
+        });
+        earnedXp += dur;
+      }
+
+      // 5. Append reflection note to today's Day Review
+      let nextReflections = [...(prev.reflections || [])];
+      if (res.reflectionNote) {
+        const existingIdx = nextReflections.findIndex(r => r.date === todayStr);
+        if (existingIdx >= 0) {
+          nextReflections[existingIdx] = {
+            ...nextReflections[existingIdx],
+            summary: nextReflections[existingIdx].summary 
+              ? nextReflections[existingIdx].summary + '\n• ' + res.reflectionNote 
+              : '• ' + res.reflectionNote
+          };
+        } else {
+          nextReflections.push({
+            date: todayStr,
+            wins: '',
+            blockers: '',
+            mood: 'Focused',
+            energy: 'High',
+            quality: 5,
+            summary: '• ' + res.reflectionNote
+          });
+        }
+      }
+
+      return {
+        ...prev,
+        tasks: nextTasks,
+        habits: nextHabits,
+        workSessions: nextWork,
+        reflections: nextReflections,
         user: {
           ...prev.user,
-          xp: (prev.user.xp || 0) + (res.duration || 25)
+          xp: (prev.user.xp || 0) + earnedXp,
         }
-      }));
-      voiceService.speak("Work session logged.");
+      };
+    });
+
+    audioService.playSuccess();
+
+    // J.A.R.V.I.S. speaks back the conversational confirmation
+    if (res.aiVoiceResponse) {
+      voiceService.speak(res.aiVoiceResponse);
     } else {
-      voiceService.speak("Command unrecognized. Please repeat clearly.");
+      voiceService.speak("Protocols registered.");
     }
   };
 
-  const { isListening, transcript, isProcessing, startListening, stopListening } = useVoiceToTask(activeGeminiKey, handleAICommandResult);
+  const habitTitles = useMemo(() => (data.habits || []).map(h => h.title), [data.habits]);
+  const voiceContext = useMemo(() => ({ habitTitles, todayDate: getFlowDate() }), [habitTitles]);
+
+  const { isListening, transcript, isProcessing, startListening, stopListening } = useVoiceToTask(
+    activeGeminiKey, 
+    handleAICommandResult,
+    voiceContext
+  );
 
   const handleMicClick = () => {
     if (activeGeminiKey) {
@@ -275,6 +351,68 @@ export default function App() {
     }
   };
 
+  // 1-Click Schedule Recalibration (Adaptive Timeblocking)
+  const recalibrateTodaySchedule = () => {
+    const todayStr = getFlowDate();
+    const now = new Date();
+    let currentHour = now.getHours();
+    let currentMin = Math.ceil(now.getMinutes() / 15) * 15;
+    if (currentMin >= 60) {
+      currentHour += 1;
+      currentMin = 0;
+    }
+
+    let adjustedCount = 0;
+    let overflowCount = 0;
+
+    updateData(prev => {
+      let nextTasks = [...(prev.tasks || [])];
+      let nextPotentials = [...(prev.potentials || [])];
+
+      const pMap = { high: 3, medium: 2, low: 1 };
+      const unfinishedToday = nextTasks
+        .filter(t => t.date === todayStr && !t.completed)
+        .sort((a, b) => (pMap[b.priority || 'medium']) - (pMap[a.priority || 'medium']));
+
+      if (unfinishedToday.length === 0) return prev;
+
+      unfinishedToday.forEach(task => {
+        // If task time stretches past 22:00, push low-priority tasks to Horizon
+        if (currentHour >= 22 && task.priority !== 'high') {
+          nextTasks = nextTasks.filter(t => t.id !== task.id);
+          nextPotentials.push({
+            id: task.id,
+            title: task.title,
+            targetDate: todayStr,
+            category: 'task',
+            status: 'dormant',
+            createdAt: new Date().toISOString()
+          });
+          overflowCount++;
+        } else {
+          const timeStr = `${String(currentHour).padStart(2, '0')}:${String(currentMin).padStart(2, '0')}`;
+          nextTasks = nextTasks.map(t => t.id === task.id ? { ...t, time: timeStr } : t);
+          adjustedCount++;
+
+          // 45 min task + 15 min decompression buffer
+          currentHour += 1;
+        }
+      });
+
+      return {
+        ...prev,
+        tasks: nextTasks,
+        potentials: nextPotentials
+      };
+    });
+
+    audioService.playSuccess();
+    if (overflowCount > 0) {
+      voiceService.speak(`Recalibrated ${adjustedCount} protocols with decompression buffers. Shifted ${overflowCount} items to the Horizon.`);
+    } else {
+      voiceService.speak(`Schedule recalibrated for ${adjustedCount} remaining protocols.`);
+    }
+  };
 
   // Persist state to local storage immediately whenever data changes
   useEffect(() => {
@@ -726,7 +864,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto">
             {currentView === 'dashboard' && <Dashboard data={data} toggleTask={toggleTask} toggleHabit={toggleHabit} switchView={setCurrentView} selectedDate={selectedDate} convertPotential={convertPotential} dismissPotential={dismissPotential} activeGeminiKey={activeGeminiKey} onRequestAI={handleRequestAI} />}
             {currentView === 'focus' && <FocusMode onSessionComplete={(mins) => updateData(prev => ({ ...prev, user: { ...prev.user, xp: (prev.user.xp || 0) + (mins * 2) } }))} />}
-            {currentView === 'tasks' && <TaskManager tasks={data.tasks || []} addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} selectedDate={selectedDate} startMomentum={startMomentum} updateTask={updateTask} />}
+            {currentView === 'tasks' && <TaskManager tasks={data.tasks || []} addTask={addTask} toggleTask={toggleTask} deleteTask={deleteTask} selectedDate={selectedDate} startMomentum={startMomentum} updateTask={updateTask} onRecalibrateSchedule={recalibrateTodaySchedule} />}
             {currentView === 'learning' && <Learning topics={data.topics || []} addTopic={addTopic} processRevision={processRevision} deleteTopic={deleteTopic} updateTopic={updateTopic} startMomentum={startMomentum} />}
             {currentView === 'habits' && <HabitTracker habits={data.habits || []} addHabit={addHabit} toggleHabit={toggleHabit} deleteHabit={deleteHabit} updateHabit={updateHabit} />}
             {currentView === 'forecast' && <Forecast data={data} addPotential={addPotential} convertPotential={convertPotential} dismissPotential={dismissPotential} />}

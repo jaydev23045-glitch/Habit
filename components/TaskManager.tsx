@@ -11,9 +11,10 @@ interface TaskManagerProps {
   startMomentum?: (id: string) => void;
   selectedDate: string;
   updateTask?: (id: string, updates: Partial<Task>) => void;
+  onRecalibrateSchedule?: () => void;
 }
 
-export const TaskManager = memo<TaskManagerProps>(({ tasks, addTask, toggleTask, deleteTask, startMomentum, selectedDate, updateTask }) => {
+export const TaskManager = memo<TaskManagerProps>(({ tasks, addTask, toggleTask, deleteTask, startMomentum, selectedDate, updateTask, onRecalibrateSchedule }) => {
   const [viewScope, setViewScope] = useState<'day' | 'all'>('day');
   const [sortBy, setSortBy] = useState<'priority' | 'date' | 'time'>('priority');
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
@@ -98,9 +99,22 @@ export const TaskManager = memo<TaskManagerProps>(({ tasks, addTask, toggleTask,
            <p className="text-slate-400 text-sm">{viewScope === 'day' ? `Active for ${formatDateDisplay(selectedDate)}` : 'Full History'}</p>
         </div>
         
-        <div className="flex bg-cardBg rounded-xl p-1 border border-cardBorder h-11">
-            <button onClick={() => setViewScope('day')} className={`px-5 rounded-lg text-xs font-bold transition-all ${viewScope === 'day' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white'}`}>Active</button>
-            <button onClick={() => setViewScope('all')} className={`px-5 rounded-lg text-xs font-bold transition-all ${viewScope === 'all' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white'}`}>Archive</button>
+        <div className="flex items-center gap-3">
+          {onRecalibrateSchedule && viewScope === 'day' && (
+            <button
+              onClick={onRecalibrateSchedule}
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-gradient-to-r from-accentCyan/15 to-primary/15 hover:from-accentCyan/25 hover:to-primary/25 border border-accentCyan/30 text-accentCyan hover:text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+              title="Automatically stagger remaining tasks with 15-minute buffers"
+            >
+              <Zap size={14} className="text-accentCyan animate-pulse" />
+              <span>Recalibrate</span>
+            </button>
+          )}
+
+          <div className="flex bg-[#10141e] rounded-xl p-1 border border-white/[0.08] h-11">
+              <button onClick={() => setViewScope('day')} className={`px-4 rounded-lg text-xs font-bold transition-all ${viewScope === 'day' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white'}`}>Active</button>
+              <button onClick={() => setViewScope('all')} className={`px-4 rounded-lg text-xs font-bold transition-all ${viewScope === 'all' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white'}`}>Archive</button>
+          </div>
         </div>
       </div>
 

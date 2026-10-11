@@ -32,6 +32,8 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
   const [editingTitle, setEditingTitle] = useState(habit.title);
   const [editingAttribute, setEditingAttribute] = useState<Attribute>(habit.attribute || 'WIL');
   const [editingTime, setEditingTime] = useState(habit.reminderTime || '08:00');
+  const [editingCue, setEditingCue] = useState(habit.implementationCue || '');
+  const [editingMVH, setEditingMVH] = useState(habit.minimumViableText || '');
   
   const startTime = useRef<number | null>(null);
   const requestRef = useRef<number | null>(null);
@@ -141,38 +143,61 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
 
   if (isEditing) {
     return (
-      <div className="bg-cardBg border border-primary/50 rounded-[2rem] p-6 flex flex-col items-center text-center relative group min-h-[340px] justify-between transition-all duration-500 shadow-xl overflow-hidden w-full">
-        <div className="w-full flex-1 flex flex-col gap-4 justify-center">
-          <h3 className="font-bold text-[10px] text-slate-500 uppercase tracking-[0.3em]">Modify Protocol</h3>
+      <div className="bg-[#10141e] border border-primary/50 rounded-[2rem] p-6 flex flex-col items-center text-center relative group min-h-[380px] justify-between transition-all duration-300 shadow-2xl overflow-hidden w-full">
+        <div className="w-full flex-1 flex flex-col gap-3 justify-center">
+          <h3 className="font-bold text-[10px] text-slate-400 uppercase tracking-[0.25em]">Modify Habit Protocol</h3>
           <input
             type="text"
             value={editingTitle}
             onChange={(e) => setEditingTitle(e.target.value)}
-            className="w-full bg-bgDark border border-cardBorder rounded-xl px-4 py-3 text-sm text-white focus:border-primary outline-none font-bold"
+            className="w-full bg-black/60 border border-white/[0.08] focus:border-primary rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none font-bold"
             placeholder="Protocol Title"
             autoFocus
           />
 
-          <div className="space-y-1.5 text-left">
-            <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Reminder Time</span>
+          <div className="grid grid-cols-2 gap-2 text-left">
+            <div>
+              <span className="text-[8px] font-black uppercase text-slate-500 tracking-wider">Reminder</span>
+              <input 
+                type="time" 
+                value={editingTime} 
+                onChange={e => setEditingTime(e.target.value)}
+                className="w-full bg-black/60 border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white focus:border-primary outline-none font-bold mt-1"
+                style={{ colorScheme: 'dark' }}
+              />
+            </div>
+            <div>
+              <span className="text-[8px] font-black uppercase text-slate-500 tracking-wider">Low-Energy MVH</span>
+              <input 
+                type="text" 
+                value={editingMVH} 
+                onChange={e => setEditingMVH(e.target.value)}
+                placeholder="e.g. 1 page"
+                className="w-full bg-black/60 border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white focus:border-primary outline-none font-medium mt-1"
+              />
+            </div>
+          </div>
+
+          <div className="text-left">
+            <span className="text-[8px] font-black uppercase text-slate-500 tracking-wider">Habit Stacking Anchor Cue</span>
             <input 
-              type="time" 
-              value={editingTime} 
-              onChange={e => setEditingTime(e.target.value)}
-              className="w-full bg-bgDark border border-cardBorder rounded-xl px-4 py-2.5 text-xs text-white focus:border-primary outline-none font-bold"
-              style={{ colorScheme: 'dark' }}
+              type="text" 
+              value={editingCue} 
+              onChange={e => setEditingCue(e.target.value)}
+              placeholder="e.g. After making morning coffee..."
+              className="w-full bg-black/60 border border-white/[0.08] rounded-xl px-3 py-1.5 text-xs text-white focus:border-primary outline-none font-medium mt-1"
             />
           </div>
 
-          <div className="space-y-1.5 text-left">
-            <span className="text-[9px] font-black uppercase text-slate-500 tracking-wider">Attribute Alignment</span>
+          <div className="space-y-1 text-left">
+            <span className="text-[8px] font-black uppercase text-slate-500 tracking-wider">Attribute Alignment</span>
             <div className="flex flex-wrap gap-1.5 justify-center">
               {(['STR', 'INT', 'WIL', 'FOC', 'REC'] as Attribute[]).map(a => (
                 <button
                   key={a}
                   type="button"
                   onClick={() => setEditingAttribute(a)}
-                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${editingAttribute === a ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-bgDark/40 border border-white/5 text-slate-500 hover:text-slate-300'}`}
+                  className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase transition-all ${editingAttribute === a ? 'bg-primary/20 text-primary border border-primary/40' : 'bg-black/40 border border-white/5 text-slate-500 hover:text-slate-300'}`}
                 >
                   {a}
                 </button>
@@ -191,7 +216,13 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
           <button
             onClick={() => {
               if (editingTitle.trim()) {
-                updateHabit(habit.id, { title: editingTitle, attribute: editingAttribute, reminderTime: editingTime });
+                updateHabit(habit.id, { 
+                  title: editingTitle, 
+                  attribute: editingAttribute, 
+                  reminderTime: editingTime,
+                  implementationCue: editingCue,
+                  minimumViableText: editingMVH
+                });
                 setIsEditing(false);
               }
             }}
@@ -249,15 +280,38 @@ export const HabitCard: React.FC<HabitCardProps> = ({ habit, toggleHabit, delete
 
       {/* Main Content */}
       <div className="w-full flex flex-col items-center flex-1 mt-8">
-        <div className="flex items-center gap-2 mb-4">
-            <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${isDoneToday ? 'text-emerald-500' : 'text-slate-600'}`}>
+        <div className="flex items-center gap-2 mb-2">
+            <span className={`text-[9px] font-black uppercase tracking-[0.3em] ${isDoneToday ? 'text-emerald-400' : 'text-slate-500'}`}>
                 {isDoneToday ? 'Protocol Verified' : 'Protocol Active'}
             </span>
         </div>
+
+        {habit.implementationCue && (
+          <div className="mb-2.5 text-[9px] font-mono font-bold text-accentCyan bg-accentCyan/10 border border-accentCyan/20 px-2.5 py-1 rounded-xl max-w-[90%] truncate">
+            🔗 {habit.implementationCue}
+          </div>
+        )}
         
-        <h3 className={`text-xl font-black mb-5 line-clamp-2 min-h-[3.5rem] flex items-center justify-center text-white leading-tight ${isDoneToday ? 'opacity-60' : ''}`}>
+        <h3 className={`text-xl font-black mb-3 line-clamp-2 min-h-[3.5rem] flex items-center justify-center text-white leading-tight ${isDoneToday ? 'opacity-60' : ''}`}>
           {habit.title}
         </h3>
+
+        {!isDoneToday && habit.minimumViableText && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              audioService.playSuccess();
+              setFloatAnim({ show: true, text: `+${Math.max(5, Math.floor(habit.baseXp / 2))} XP (MVH)` });
+              toggleHabit(habit.id);
+              setTimeout(() => setFloatAnim(null), 2000);
+            }}
+            className="mb-4 text-[9px] font-mono font-bold text-amber-300 hover:text-white bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 px-3 py-1 rounded-xl transition-all active:scale-95 flex items-center gap-1.5"
+            title={`Complete low-energy version: ${habit.minimumViableText}`}
+          >
+            <Zap size={10} className="text-amber-400" />
+            <span>Low-Energy: {habit.minimumViableText}</span>
+          </button>
+        )}
         
         {/* Time Input */}
         <div className="mb-6 w-full space-y-2">

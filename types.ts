@@ -49,6 +49,29 @@ export interface Habit {
   velocity?: number; // 0-100 score based on last 30 days
   attribute: Attribute;
   baseXp: number; // Fixed base XP reward
+  anchorHabitId?: string; // ID of the preceding habit in an atomic stack
+  implementationCue?: string; // e.g. "After making morning coffee..."
+  minimumViableText?: string; // e.g. "Read just 1 page" on low energy days
+}
+
+export interface MultiVoiceResult {
+  tasksToAdd?: {
+    title: string;
+    time?: string;
+    date?: string;
+    priority?: 'low' | 'medium' | 'high';
+  }[];
+  habitsToComplete?: string[]; // Habit titles matched by AI
+  habitsToAdd?: {
+    title: string;
+    attribute?: Attribute;
+  }[];
+  workSessionToLog?: {
+    title: string;
+    durationMinutes: number;
+  };
+  reflectionNote?: string;
+  aiVoiceResponse: string; // The concise conversational confirmation spoken by J.A.R.V.I.S.
 }
 
 export type TopicStatus = 'active' | 'mastered' | 'archived';

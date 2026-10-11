@@ -1,27 +1,41 @@
 import { GoogleGenAI } from '@google/genai';
+import { MultiVoiceResult } from '../types';
 
-export const parseVoiceCommand = async (transcript: string, apiKey: string) => {
+export const parseVoiceCommand = async (
+  transcript: string, 
+  apiKey: string,
+  context?: { habitTitles?: string[]; todayDate?: string }
+): Promise<MultiVoiceResult> => {
   const ai = new GoogleGenAI({ apiKey });
+  const today = context?.todayDate || new Date().toISOString().split('T')[0];
+  const habitList = (context?.habitTitles || []).join(', ');
   
   const prompt = `
-You are a highly intelligent productivity assistant. The user just spoke a voice command.
-User transcript: "${transcript}"
-Current Date: ${new Date().toISOString().split('T')[0]}
+You are J.A.R.V.I.S., an elite neural productivity assistant for Flow OS.
+The user just spoke a natural stream-of-consciousness voice command or brain dump.
+Transcript: "${transcript}"
+Current Date: ${today}
+Registered Habits: [${habitList}]
 
-Your job is to parse this command into a strict JSON object.
-Allowed actions:
-- TASK: Add a new task (e.g., "Remind me to call Mom at 5pm", "Buy groceries tomorrow")
-- HABIT: Add a new habit (e.g., "I want to start running every day")
-- WORK_SESSION: Log a completed work session (e.g., "I just worked on coding for 45 minutes")
-- UNKNOWN: Cannot determine the intent.
+Your goal is to parse EVERY distinct intent from this speech into a single structured JSON object.
 
-Return ONLY valid JSON (no markdown formatting, no backticks).
+Capabilities:
+1. "tasksToAdd": Any tasks or reminders to schedule. Infer relative dates ("tomorrow", "tonight", "next Monday") into YYYY-MM-DD. Infer 24-hr time (HH:MM) if mentioned. Infer priority ('high' | 'medium' | 'low').
+2. "habitsToComplete": Any mention of completing or having done an existing habit (e.g. "finished my run", "did meditation", "read for 20 mins"). Match exact registered habit title from the list.
+3. "habitsToAdd": Any intent to build a new habit (e.g. "I want to start cold showers"). Assign attribute: 'STR' | 'INT' | 'WIL' | 'FOC' | 'REC'.
+4. "workSessionToLog": If they completed a work sprint (e.g. "worked on code for 45 mins"), extract title and duration in minutes.
+5. "reflectionNote": Any mental state or sentiment note (e.g. "feeling energized", "feeling tired") to append to their daily review.
+6. "aiVoiceResponse": A crisp, natural, professional 1-2 sentence spoken reply from J.A.R.V.I.S confirming what was accomplished (e.g. "Checked off your run, scheduled financial deck for tomorrow at 3 PM, and recorded your reflection."). DO NOT use markdown, emojis, or bullet points in aiVoiceResponse.
+
+Return ONLY raw valid JSON (no markdown formatting, no backticks).
 Format:
 {
-  "type": "TASK" | "HABIT" | "WORK_SESSION" | "UNKNOWN",
-  "title": "String title of task/habit/work",
-  "time": "HH:MM format if specified for task, else omit",
-  "duration": "Number of minutes for work session, else omit"
+  "tasksToAdd": [ { "title": "...", "time": "HH:MM", "date": "YYYY-MM-DD", "priority": "medium" } ],
+  "habitsToComplete": [ "Title" ],
+  "habitsToAdd": [ { "title": "...", "attribute": "WIL" } ],
+  "workSessionToLog": { "title": "...", "durationMinutes": 45 },
+  "reflectionNote": "...",
+  "aiVoiceResponse": "..."
 }
 `;
 
@@ -42,7 +56,7 @@ Format:
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     return JSON.parse(cleanJson);
   } catch (err: any) {
-    console.error("Gemini Parse Error:", err);
+    console.error("Gemini Multi-Entity Parse Error:", err);
     throw err;
   }
 };
